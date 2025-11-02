@@ -68,6 +68,8 @@ export default function Register() {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Please enter a valid email";
+    } else if (formData.role === "STUDENT" && !formData.email.toLowerCase().endsWith("@chitkara.edu.in")) {
+      newErrors.email = "Students must use official Chitkara email ID (@chitkara.edu.in)";
     }
     
     if (!formData.password) {
@@ -115,13 +117,20 @@ export default function Register() {
       const { confirmPassword, ...registrationData } = formData;
       const response = await registerUser(registrationData);
       
-      // Check if this is a super admin request
+      // Check if this is an approval request (super admin or club admin)
       if (response.data?.type === 'super_admin_request') {
         setErrors({ 
           success: "Super admin request submitted successfully! Please wait for approval from an existing super admin. You will be notified once your request is reviewed." 
         });
         
-        // Don't redirect for super admin requests, just show the message
+        setTimeout(() => {
+          navigate("/login");
+        }, 5000);
+      } else if (response.data?.type === 'club_admin_request') {
+        setErrors({ 
+          success: "Club admin request submitted successfully! Please wait for approval from a super admin. You will be able to login once approved." 
+        });
+        
         setTimeout(() => {
           navigate("/login");
         }, 5000);
@@ -252,6 +261,11 @@ export default function Register() {
                 />
               </div>
               {errors.email && <span className="error-text">{errors.email}</span>}
+              {formData.role === "STUDENT" && !errors.email && (
+                <span className="info-text" style={{display: 'block', marginTop: '4px', fontSize: '0.875rem', color: '#666'}}>
+                  📚 Students must use official Chitkara email (@chitkara.edu.in)
+                </span>
+              )}
             </div>
 
             <div className="form-group">

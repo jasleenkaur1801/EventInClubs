@@ -12,8 +12,8 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "club_admin_requests")
+public class ClubAdminRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,19 +32,30 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(name = "club_id")
+    private Long clubId; // Assigned by super admin during approval
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private Role role;
-
-    // Club association for CLUB_ADMIN role
-    @Column(name = "club_id")
-    private Long clubId;
-
-    @Column(name = "created_at", nullable = false)
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private ClubAdminRequestStatus status = ClubAdminRequestStatus.PENDING;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "requested_at", nullable = false)
     @Builder.Default
-    private Instant updatedAt = Instant.now();
+    private Instant requestedAt = Instant.now();
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    @Column(name = "approved_by")
+    private Long approvedBy; // ID of the super admin who approved
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    public enum ClubAdminRequestStatus {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
 }

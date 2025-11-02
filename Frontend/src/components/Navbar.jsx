@@ -15,12 +15,10 @@ export default function Navbar() {
   // Get fresh auth data on every render
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  // SUPER_ADMIN functionality disabled
-  // const superAdminToken = localStorage.getItem("superAdminToken");
-  // const userRole = localStorage.getItem("userRole");
+  // SUPER_ADMIN functionality enabled
   
-  const isAuthenticated = token; // || superAdminToken;
-  const isSuperAdmin = false; // userRole === 'SUPER_ADMIN'; // Disabled
+  const isAuthenticated = token;
+  const isSuperAdmin = role === 'SUPER_ADMIN';
   const isAdmin = role === 'ADMIN' || role === 'CLUB_ADMIN';
   
   // Update when location changes
@@ -39,10 +37,10 @@ export default function Navbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("email");
-    // SUPER_ADMIN functionality disabled
-    // localStorage.removeItem("superAdminToken");
-    // localStorage.removeItem("userRole");
+    localStorage.removeItem("userRole");
     localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+    localStorage.removeItem("rememberMe");
     triggerUpdate();
     navigate("/login");
   };
@@ -71,8 +69,8 @@ export default function Navbar() {
             </>
           ) : (
             <div className="user-actions">
-              {/* SUPER_ADMIN functionality disabled */}
-              {/* {isSuperAdmin && <span className="admin-badge">🔐 Super Admin</span>} */}
+              {/* SUPER_ADMIN functionality enabled */}
+              {isSuperAdmin && <span className="admin-badge">🔐 Super Admin</span>}
               {!isAdmin && !isSuperAdmin && <AchievementBadge />}
               {!isAdmin && !isSuperAdmin && <NotificationBell />}
               <button className="btn-ghost" onClick={logout}>Logout</button>

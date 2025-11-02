@@ -29,6 +29,7 @@ public interface UserAchievementRepository extends JpaRepository<UserAchievement
     
     @Query("SELECT u, COALESCE(SUM(ua.pointsEarned), 0) as totalPoints, COUNT(ua) as achievementCount " +
            "FROM User u LEFT JOIN UserAchievement ua ON u.id = ua.user.id " +
+           "WHERE u.role = 'STUDENT' " +
            "GROUP BY u.id, u.name, u.email " +
            "ORDER BY totalPoints DESC, achievementCount DESC " +
            "LIMIT :limit")

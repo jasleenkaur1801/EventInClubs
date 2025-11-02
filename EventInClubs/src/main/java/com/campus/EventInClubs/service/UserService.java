@@ -26,6 +26,11 @@ public class UserService {
             throw new IllegalArgumentException("Email already in use");
         }
 
+        // Validate email domain for STUDENT role
+        if (role == Role.STUDENT && !email.toLowerCase().endsWith("@chitkara.edu.in")) {
+            throw new IllegalArgumentException("Students must register with official Chitkara email ID (@chitkara.edu.in)");
+        }
+
         User u = User.builder()
                 .name(name)
                 .email(email)

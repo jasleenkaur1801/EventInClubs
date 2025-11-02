@@ -10,8 +10,8 @@ import Problems from './pages/Problems';
 import ClubTopics from './pages/ClubTopics';
 import ClubAdminDashboard from './pages/ClubAdminDashboard';
 import ActiveEvents from './pages/ActiveEvents';
-// SUPER_ADMIN functionality disabled
-// import SuperAdminDashboard from './pages/SuperAdminDashboard';
+// SUPER_ADMIN functionality enabled
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import ViewIdeas from "./pages/ViewIdeas";
 import Leaderboard from "./pages/Leaderboard";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -30,8 +30,8 @@ export default function App() {
         <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
         <Route path="/events/:eventId/ideas" element={<ProtectedRoute><ViewIdeas /></ProtectedRoute>} />
         <Route path="/admin/dashboard" element={<ProtectedRoute><ClubAdminDashboard /></ProtectedRoute>} />
-        {/* SUPER_ADMIN functionality disabled */}
-        {/* <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} /> */}
+        {/* SUPER_ADMIN functionality enabled */}
+        <Route path="/superadmin/dashboard" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/problems" element={<Problems />} />

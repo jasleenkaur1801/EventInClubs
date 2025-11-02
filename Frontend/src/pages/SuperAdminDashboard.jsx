@@ -4,7 +4,9 @@ import { eventApi } from '../api/event.js';
 import { userApi } from '../api/user';
 import { analyticsApi } from '../api/analytics';
 import { superAdminRequestApi } from '../api/superAdminRequests';
+import { clubAdminRequestApi } from '../api/clubAdminRequests';
 import SuperAdminRequests from './SuperAdminRequests';
+import ClubAdminRequests from './ClubAdminRequests';
 import SuperAdminApprovalDashboard from '../components/SuperAdminApprovalDashboard';
 import './SuperAdminDashboard.css';
 
@@ -15,6 +17,7 @@ export default function SuperAdminDashboard() {
   const [users, setUsers] = useState([]);
   const [analytics, setAnalytics] = useState({});
   const [pendingSuperAdminRequests, setPendingSuperAdminRequests] = useState(0);
+  const [pendingClubAdminRequests, setPendingClubAdminRequests] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +31,8 @@ export default function SuperAdminDashboard() {
         fetchEvents(),
         fetchUsers(),
         fetchAnalytics(),
-        fetchPendingSuperAdminRequests()
+        fetchPendingSuperAdminRequests(),
+        fetchPendingClubAdminRequests()
       ]);
       setLoading(false);
     } catch (error) {
@@ -87,6 +91,16 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const fetchPendingClubAdminRequests = async () => {
+    try {
+      const response = await clubAdminRequestApi.getPendingRequestsCount();
+      setPendingClubAdminRequests(response.data.pendingRequests || 0);
+    } catch (error) {
+      console.error('Error fetching pending club admin requests:', error);
+      setPendingClubAdminRequests(0);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('superAdminToken');
     localStorage.removeItem('userRole');
@@ -129,6 +143,14 @@ export default function SuperAdminDashboard() {
           <div className="stat-content">
             <h3>{pendingSuperAdminRequests}</h3>
             <p>Super Admin Requests</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">🏢</div>
+          <div className="stat-content">
+            <h3>{pendingClubAdminRequests}</h3>
+            <p>Club Admin Requests</p>
           </div>
         </div>
       </div>
@@ -217,6 +239,8 @@ export default function SuperAdminDashboard() {
         return <SuperAdminApprovalDashboard />;
       case 'super-admin-requests':
         return <SuperAdminRequests />;
+      case 'club-admin-requests':
+        return <ClubAdminRequests />;
       case 'system':
         return renderSystemManagement();
       default:
@@ -254,6 +278,16 @@ export default function SuperAdminDashboard() {
             Super Admin Requests
             {pendingSuperAdminRequests > 0 && (
               <span className="nav-badge">{pendingSuperAdminRequests}</span>
+            )}
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'club-admin-requests' ? 'active' : ''}`}
+            onClick={() => setActiveTab('club-admin-requests')}
+          >
+            <span className="nav-icon">🏢</span>
+            Club Admin Requests
+            {pendingClubAdminRequests > 0 && (
+              <span className="nav-badge">{pendingClubAdminRequests}</span>
             )}
           </button>
           <button
