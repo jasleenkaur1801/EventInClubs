@@ -180,6 +180,18 @@ public class ClubController {
         }
     }
     
+    @GetMapping("/admin/{adminUserId}")
+    public ResponseEntity<List<ClubDto>> getClubsByAdminUser(@PathVariable Long adminUserId) {
+        try {
+            List<ClubDto> clubs = clubService.getClubsByAdminUser(adminUserId);
+            log.info("Returning {} clubs for admin user {}", clubs.size(), adminUserId);
+            return ResponseEntity.ok(clubs);
+        } catch (Exception e) {
+            log.error("Error fetching clubs for admin user: {}", adminUserId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
     // Super Admin endpoints for club approval
     @GetMapping("/pending")
     public ResponseEntity<List<ClubDto>> getPendingClubs() {

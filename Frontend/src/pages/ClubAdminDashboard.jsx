@@ -42,20 +42,48 @@ export default function ClubAdminDashboard() {
     }
   }, [location.search]);
 
-  // Fetch real data from APIs
+  // Fetch real data from APIs - wait for user data to be available
   useEffect(() => {
-    fetchClubs();
-    fetchProposals();
-    fetchEvents();
-    fetchActiveEvents();
-    fetchNotifications();
+    let retryCount = 0;
+    const maxRetries = 10; // Maximum 2 seconds (10 * 200ms)
+    
+    // Check if user data is available in localStorage
+    const checkUserAndFetch = () => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || localStorage.getItem('userId');
+      
+      if (userId) {
+        console.log('User data available, fetching dashboard data for user:', userId);
+        fetchClubs();
+        fetchProposals();
+        fetchEvents();
+        fetchActiveEvents();
+        fetchNotifications();
+      } else {
+        retryCount++;
+        console.log(`User data not yet available, retrying... (${retryCount}/${maxRetries})`);
+        
+        if (retryCount < maxRetries) {
+          // Retry after a short delay if user data is not available
+          setTimeout(checkUserAndFetch, 200);
+        } else {
+          console.error('Failed to load user data after maximum retries');
+          setLoading(false);
+          // Redirect to login if user data is not available after retries
+          navigate('/login');
+        }
+      }
+    };
+    
+    checkUserAndFetch();
   }, []);
   
-  // Fetch rejected events after clubs are loaded
+  // Fetch rejected events and active events after clubs are loaded
   useEffect(() => {
     if (clubs.length > 0) {
-      console.log('Clubs loaded, fetching rejected events for clubs:', clubs);
+      console.log('Clubs loaded, fetching rejected events and active events for clubs:', clubs);
       fetchRejectedEvents(clubs);
+      fetchActiveEvents(); // Refetch active events now that clubs are loaded
       if (!selectedClubId) {
         setSelectedClubId(clubs[0]?.id || null);
       }
@@ -125,27 +153,28 @@ export default function ClubAdminDashboard() {
   const fetchClubs = async () => {
     try {
       console.log('Fetching clubs from API...');
-      const clubsData = await clubApi.getAllClubs();
-      console.log('Clubs fetched:', clubsData);
+      
+      // Get the current user's ID from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || localStorage.getItem('userId');
+      
+      if (!userId) {
+        console.error('No user ID found. User must be logged in.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching clubs for admin user ID:', userId);
+      
+      // Fetch only clubs managed by this admin
+      const clubsData = await clubApi.getClubsByAdminUser(userId);
+      console.log('Clubs fetched for admin:', clubsData);
       
       setClubs(clubsData || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching clubs:', error);
-      // Fallback to mock data if API fails
-      const mockClubs = [
-        {
-          id: 1,
-          name: "Coding Ninjas",
-          category: "Technology",
-          memberCount: 45,
-          eventCount: 3,
-          rating: 4.5,
-          description: "Programming and coding club for tech enthusiasts",
-          isActive: true
-        }
-      ];
-      setClubs(mockClubs);
+      setClubs([]);
       setLoading(false);
     }
   };
@@ -155,22 +184,30 @@ export default function ClubAdminDashboard() {
       // Fetch events that accept ideas for proposals section
       const response = await fetch('http://localhost:8080/api/events/club-topics');
       const eventsData = await response.json();
-      const proposalsData = eventsData.map(event => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        clubName: event.clubName,
-        type: event.type || 'WORKSHOP', // Add event type
-        date: event.createdAt ? new Date(event.createdAt).toLocaleDateString() : new Date().toLocaleDateString(), // Add creation date
-        votes: event.totalVotes || 0, // Add total votes (from ideas)
-        submissionDeadline: event.ideaSubmissionDeadline || event.submissionDeadline,
-        status: event.status, // Event status (DRAFT, PENDING_APPROVAL, APPROVED, etc.)
-        approvalStatus: event.approvalStatus, // Approval status (PENDING, APPROVED, REJECTED)
-        rejectionReason: event.rejectionReason || '',
-        approvedByName: event.approvedByName || '',
-        upvotes: 0,
-        ideas: []
-      }));
+      
+      // Get club IDs managed by this admin
+      const adminClubIds = clubs.map(club => club.id);
+      console.log('Admin club IDs:', adminClubIds);
+      
+      const proposalsData = eventsData
+        .filter(event => adminClubIds.includes(event.clubId)) // Filter by admin's clubs
+        .map(event => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          clubName: event.clubName,
+          clubId: event.clubId,
+          type: event.type || 'WORKSHOP', // Add event type
+          date: event.createdAt ? new Date(event.createdAt).toLocaleDateString() : new Date().toLocaleDateString(), // Add creation date
+          votes: event.totalVotes || 0, // Add total votes (from ideas)
+          submissionDeadline: event.ideaSubmissionDeadline || event.submissionDeadline,
+          status: event.status, // Event status (DRAFT, PENDING_APPROVAL, APPROVED, etc.)
+          approvalStatus: event.approvalStatus, // Approval status (PENDING, APPROVED, REJECTED)
+          rejectionReason: event.rejectionReason || '',
+          approvedByName: event.approvedByName || '',
+          upvotes: 0,
+          ideas: []
+        }));
       
       // Filter out proposals where deadline has passed (with 1 day grace period)
       console.log('All proposals before filtering:', proposalsData);
@@ -284,7 +321,13 @@ export default function ClubAdminDashboard() {
       // Fetch events that accept ideas for the Topics for Ideas section
       const response = await fetch('http://localhost:8080/api/events/club-topics');
       const eventsData = await response.json();
-      setEvents(eventsData || []);
+      
+      // Get club IDs managed by this admin
+      const adminClubIds = clubs.map(club => club.id);
+      
+      // Filter events to show only those from admin's clubs
+      const adminEvents = eventsData.filter(event => adminClubIds.includes(event.clubId));
+      setEvents(adminEvents || []);
     } catch (error) {
       console.error('Error fetching events:', error);
       // Fallback to mock events if API fails
@@ -370,7 +413,21 @@ export default function ClubAdminDashboard() {
       // Fetch published events for admin dashboard
       const response = await fetch('http://localhost:8080/api/events/admin/published');
       const activeEventsData = await response.json();
-      const list = activeEventsData || [];
+      
+      // Get club IDs managed by this admin
+      const adminClubIds = clubs.map(club => club.id);
+      
+      console.log('Fetching active events...');
+      console.log('Admin club IDs:', adminClubIds);
+      console.log('All active events:', activeEventsData);
+      
+      // Filter active events to show only those from admin's clubs
+      const list = (activeEventsData || []).filter(event => {
+        console.log(`Event "${event.title}" - clubId: ${event.clubId}, included: ${adminClubIds.includes(event.clubId)}`);
+        return adminClubIds.includes(event.clubId);
+      });
+      
+      console.log('Filtered active events:', list);
       setActiveEvents(list);
       // After loading events, fetch live registration counts per event
       try {
@@ -664,8 +721,16 @@ export default function ClubAdminDashboard() {
 
   const handleRegisterClub = async (clubData) => {
     try {
-      const userId = localStorage.getItem('userId') || 1; // Get current user ID
-      console.log('Registering club with data:', clubData);
+      // Get current user ID from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || localStorage.getItem('userId');
+      
+      if (!userId) {
+        alert('You must be logged in to register a club');
+        return;
+      }
+      
+      console.log('Registering club with data:', clubData, 'for user ID:', userId);
       
       // Format data to match ClubDto structure
       const clubPayload = {
@@ -675,8 +740,7 @@ export default function ClubAdminDashboard() {
         shortName: clubData.shortName,
         memberCount: parseInt(clubData.memberCount) || 0,
         eventCount: 0,
-        rating: 0.0,
-        isActive: false // New clubs start as inactive (pending)
+        rating: 0.0
       };
       
       console.log('Sending club payload:', clubPayload);
@@ -684,12 +748,12 @@ export default function ClubAdminDashboard() {
       const newClub = await clubApi.createClub(clubPayload, userId);
       console.log('Club created successfully:', newClub);
       
-      // Refresh clubs list immediately
+      // Refresh clubs list
       await fetchClubs();
       setShowRegistrationModal(false);
       
       // Show success message
-      alert('Club registered successfully! Status: Pending approval');
+      alert('Club registered successfully! You can now manage your club from the dashboard.');
     } catch (error) {
       console.error('Error registering club:', error);
       console.error('Error details:', error.response?.data);
@@ -1277,6 +1341,32 @@ export default function ClubAdminDashboard() {
         return renderOverview();
     }
   };
+
+  // Show loading spinner while waiting for user data
+  if (loading) {
+    return (
+      <div className="club-admin-dashboard">
+        <div className="loading-container" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          <div className="spinner" style={{
+            width: '50px',
+            height: '50px',
+            border: '5px solid #f3f3f3',
+            borderTop: '5px solid #7c3aed',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <p style={{ color: '#666', fontSize: '16px' }}>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="club-admin-dashboard">

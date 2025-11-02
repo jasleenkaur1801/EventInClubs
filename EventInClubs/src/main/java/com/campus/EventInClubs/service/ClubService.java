@@ -28,8 +28,9 @@ public class ClubService {
     
     public List<ClubDto> getAllActiveClubs() {
         try {
-            List<Club> clubs = clubRepository.findByIsActiveTrue();
-            log.info("Found {} active clubs", clubs.size());
+            // Only return clubs that are active AND approved
+            List<Club> clubs = clubRepository.findByIsActiveTrueAndApprovalStatus(ApprovalStatus.APPROVED);
+            log.info("Found {} active and approved clubs", clubs.size());
             return clubs.stream()
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
@@ -99,23 +100,27 @@ public class ClubService {
                 .map(this::convertToDto);
     }
     
+    public List<ClubDto> getClubsByAdminUser(Long adminUserId) {
+        List<Club> clubs = clubRepository.findByAdminUserId(adminUserId);
+        log.info("Found {} clubs for admin user {}", clubs.size(), adminUserId);
+        return clubs.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    
     public Optional<ClubDto> getClubByName(String name) {
         return clubRepository.findByName(name)
                 .map(this::convertToDto);
     }
     
     public ClubDto createClub(ClubDto clubDto, Long adminUserId) {
-        // Check if user exists and has appropriate role
+        // Check if user exists
         User adminUser = userRepository.findById(adminUserId)
-                .orElse(null);
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + adminUserId));
         
-        // For testing purposes, allow club creation even if user doesn't exist or doesn't have proper role
-        // TODO: Re-enable strict role checking in production
-        if (adminUser == null) {
-            log.warn("Admin user with ID {} not found, creating club anyway for testing", adminUserId);
-        } else if (adminUser.getRole() != com.campus.EventInClubs.domain.model.Role.CLUB_ADMIN && 
-                   adminUser.getRole() != com.campus.EventInClubs.domain.model.Role.SUPER_ADMIN) {
-            log.warn("User {} does not have CLUB_ADMIN or SUPER_ADMIN role, creating club anyway for testing", adminUserId);
+        // Prevent Super Admin from being assigned as club admin
+        if (adminUser.getRole() == com.campus.EventInClubs.domain.model.Role.SUPER_ADMIN) {
+            throw new RuntimeException("Super Admin cannot be assigned as club admin. Only regular users can manage clubs.");
         }
         
         // Check if club name already exists
@@ -127,6 +132,7 @@ public class ClubService {
             throw new RuntimeException("Club with this short name already exists");
         }
         
+        // Create club with APPROVED status - auto-approved
         Club club = Club.builder()
                 .name(clubDto.getName())
                 .description(clubDto.getDescription())
@@ -136,12 +142,12 @@ public class ClubService {
                 .eventCount(clubDto.getEventCount() != null ? clubDto.getEventCount() : 0)
                 .rating(clubDto.getRating() != null ? clubDto.getRating() : 0.0)
                 .adminUser(adminUser)
-                .isActive(true) // Auto-approve new clubs
-                .approvalStatus(ApprovalStatus.APPROVED) // Auto-approve new clubs
+                .isActive(true) // Active immediately
+                .approvalStatus(ApprovalStatus.APPROVED) // Auto-approved
                 .build();
         
         Club savedClub = clubRepository.save(club);
-        log.info("Created and auto-approved new club: {}", savedClub.getName());
+        log.info("Created and auto-approved new club: {} (Admin: {})", savedClub.getName(), adminUser.getName());
         
         return convertToDto(savedClub);
     }

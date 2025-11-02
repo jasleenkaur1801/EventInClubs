@@ -147,13 +147,13 @@ export default function Login() {
       // Show success message before redirecting
       setTimeout(() => {
         // Redirect based on user role
-        // SUPER_ADMIN functionality enabled
         if (role === 'SUPER_ADMIN') {
           navigate('/superadmin/dashboard');
         } else if (role === 'ADMIN' || role === 'CLUB_ADMIN') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/');
+          // Students go to clubs page
+          navigate('/clubs');
         }
       }, 1000);
       
@@ -168,23 +168,31 @@ export default function Login() {
   const handleGoogleSuccess = (response) => {
     console.log('Google login successful:', response);
     
+    let userRole = 'STUDENT'; // Default role
+    let userData = null;
+    
     // Store token and user data in localStorage
     if (response.token) {
       localStorage.setItem('token', response.token);
     }
     
     if (response.user) {
+      userData = response.user;
+      userRole = response.user.role || 'STUDENT';
       localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('role', userRole);
       console.log('User data stored in localStorage:', response.user);
     } else if (response.email) {
       // If user object is not provided but email is available
-      const userData = {
+      userRole = response.role || 'STUDENT';
+      userData = {
         id: response.userId || response.email,
         email: response.email,
         name: response.name || response.email.split('@')[0],
-        role: response.role || 'user'
+        role: userRole
       };
       localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('role', userRole);
       console.log('User data created and stored:', userData);
     } else {
       console.warn('No user data received in Google login response');
@@ -196,16 +204,38 @@ export default function Login() {
     // Force a refresh of the auth state
     window.dispatchEvent(new Event('storage'));
     
-    // Redirect to home after a short delay
+    // Verify data is stored immediately (synchronous)
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+    console.log('Verifying stored data immediately:', { 
+      storedUser: storedUser ? 'exists' : 'missing', 
+      storedToken: storedToken ? 'exists' : 'missing',
+      userRole 
+    });
+    
+    // Force a refresh of the auth state
+    window.dispatchEvent(new Event('storage'));
+    
+    // Wait briefly then redirect based on role
     setTimeout(() => {
+      console.log('Redirecting user with role:', userRole);
+      
       // Check if we need to redirect to a protected route
       const from = new URLSearchParams(window.location.search).get('from');
       if (from) {
         navigate(from, { replace: true });
       } else {
-        navigate("/");
+        // Role-based redirection
+        if (userRole === 'SUPER_ADMIN') {
+          navigate("/superadmin/dashboard", { replace: true });
+        } else if (userRole === 'CLUB_ADMIN') {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          // Students and other users go to clubs page
+          navigate("/clubs", { replace: true });
+        }
       }
-    }, 500);
+    }, 1000); // Increased delay to 1 second for better reliability
   };
 
   const handleGoogleError = (errorMessage) => {

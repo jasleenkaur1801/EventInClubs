@@ -14,6 +14,17 @@ export const clubApi = {
     }
   },
 
+  // Get clubs by admin user ID
+  getClubsByAdminUser: async (adminUserId) => {
+    try {
+      const response = await http.get(`${CLUB_API_BASE}/admin/${adminUserId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching clubs by admin user:', error);
+      throw error;
+    }
+  },
+
   // Get top clubs
   getTopClubs: async () => {
     try {
