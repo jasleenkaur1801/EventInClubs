@@ -31,7 +31,8 @@ public class EventRegistrationService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
         
-        if (event.getStatus() != Event.EventStatus.PUBLISHED) {
+        if (event.getStatus() != Event.EventStatus.PUBLISHED && 
+            event.getStatus() != Event.EventStatus.APPROVED) {
             throw new RuntimeException("Event is not open for registration");
         }
         

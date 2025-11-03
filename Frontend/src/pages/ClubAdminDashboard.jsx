@@ -33,6 +33,7 @@ export default function ClubAdminDashboard() {
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [registrationsEventTitle, setRegistrationsEventTitle] = useState('');
   const [registrationsEventId, setRegistrationsEventId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   // Handle URL parameters for tab navigation
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -1480,39 +1481,234 @@ export default function ClubAdminDashboard() {
       )}
 
       {showRegistrationsModal && (
-        <div className="modal-overlay" onClick={() => setShowRegistrationsModal(false)}>
-          <div className="event-approval-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Registrations — {registrationsEventTitle}</h2>
-              <button className="close-btn" onClick={() => setShowRegistrationsModal(false)}>×</button>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#f5f7fa',
+          zIndex: 9999,
+          overflow: 'auto',
+          padding: '20px'
+        }}>
+          <div style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            minHeight: 'calc(100vh - 40px)'
+          }}>
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e0e0e0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'white',
+              zIndex: 10
+            }}>
+              <h2 style={{ margin: 0, fontSize: '24px' }}>📋 Attendance — {registrationsEventTitle}</h2>
+              <button 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '32px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+                onClick={() => {
+                  setShowRegistrationsModal(false);
+                  setSearchQuery('');
+                }}
+              >×</button>
             </div>
-            <div className="modal-content">
+            
+            <div style={{ padding: '24px' }}>
+              {/* Search Bar */}
+              <div style={{ marginBottom: '20px' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Search by name, email, or roll number..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    transition: 'border-color 0.3s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+                  onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                />
+              </div>
+
+              {/* Stats */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                marginBottom: '20px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{
+                  backgroundColor: '#e3f2fd',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  flex: '1',
+                  minWidth: '150px'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>Total Registered</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>
+                    {registrations.length}
+                  </div>
+                </div>
+                <div style={{
+                  backgroundColor: '#e8f5e9',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  flex: '1',
+                  minWidth: '150px'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>Present</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4CAF50' }}>
+                    {Object.values(attendanceMap).filter(Boolean).length}
+                  </div>
+                </div>
+                <div style={{
+                  backgroundColor: '#ffebee',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  flex: '1',
+                  minWidth: '150px'
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>Absent</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f44336' }}>
+                    {registrations.length - Object.values(attendanceMap).filter(Boolean).length}
+                  </div>
+                </div>
+              </div>
+
               {registrations.length === 0 ? (
-                <div>No registrations yet.</div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: '#666'
+                }}>No registrations yet.</div>
               ) : (
-                <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
                     <thead>
-                      <tr>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Name</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Email</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Roll</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Present</th>
+                      <tr style={{ backgroundColor: '#f5f5f5' }}>
+                        <th style={{
+                          textAlign: 'left',
+                          padding: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          borderBottom: '2px solid #e0e0e0'
+                        }}>Name</th>
+                        <th style={{
+                          textAlign: 'left',
+                          padding: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          borderBottom: '2px solid #e0e0e0'
+                        }}>Email</th>
+                        <th style={{
+                          textAlign: 'left',
+                          padding: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          borderBottom: '2px solid #e0e0e0'
+                        }}>Roll Number</th>
+                        <th style={{
+                          textAlign: 'left',
+                          padding: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          borderBottom: '2px solid #e0e0e0'
+                        }}>Status</th>
+                        <th style={{
+                          textAlign: 'center',
+                          padding: '16px',
+                          fontWeight: '600',
+                          color: '#333',
+                          borderBottom: '2px solid #e0e0e0'
+                        }}>Present</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {registrations.map(reg => (
-                        <tr key={reg.id} style={{ borderTop: '1px solid #eee' }}>
-                          <td style={{ padding: '8px' }}>{reg.userName}</td>
-                          <td style={{ padding: '8px' }}>{reg.userEmail}</td>
-                          <td style={{ padding: '8px' }}>{reg.rollNumber || '-'}</td>
-                          <td style={{ padding: '8px' }}>{reg.status}</td>
-                          <td style={{ padding: '8px' }}>
+                      {registrations
+                        .filter(reg => {
+                          if (!searchQuery.trim()) return true;
+                          const query = searchQuery.toLowerCase();
+                          return (
+                            (reg.userName || '').toLowerCase().includes(query) ||
+                            (reg.userEmail || '').toLowerCase().includes(query) ||
+                            (reg.rollNumber || '').toLowerCase().includes(query)
+                          );
+                        })
+                        .sort((a, b) => {
+                          const nameA = (a.userName || '').toLowerCase();
+                          const nameB = (b.userName || '').toLowerCase();
+                          return nameA.localeCompare(nameB);
+                        })
+                        .map((reg, index) => (
+                        <tr key={reg.id} style={{
+                          borderBottom: '1px solid #f0f0f0',
+                          backgroundColor: index % 2 === 0 ? 'white' : '#fafafa',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#fafafa'}
+                        >
+                          <td style={{ padding: '16px', color: '#333' }}>
+                            {reg.userName}
+                          </td>
+                          <td style={{ padding: '16px', color: '#666' }}>
+                            {reg.userEmail}
+                          </td>
+                          <td style={{ padding: '16px', color: '#666' }}>
+                            {reg.rollNumber || '-'}
+                          </td>
+                          <td style={{ padding: '16px' }}>
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              backgroundColor: reg.status === 'ATTENDED' ? '#e8f5e9' :
+                                             reg.status === 'NO_SHOW' ? '#ffebee' :
+                                             reg.status === 'CANCELLED' ? '#f5f5f5' : '#fff3e0',
+                              color: reg.status === 'ATTENDED' ? '#2e7d32' :
+                                    reg.status === 'NO_SHOW' ? '#c62828' :
+                                    reg.status === 'CANCELLED' ? '#757575' : '#e65100'
+                            }}>
+                              {reg.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
                             <input
                               type="checkbox"
                               checked={!!attendanceMap[reg.id]}
                               onChange={() => handleToggleAttendance(reg.id)}
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                cursor: 'pointer',
+                                accentColor: '#4CAF50'
+                              }}
                             />
                           </td>
                         </tr>
@@ -1521,9 +1717,37 @@ export default function ClubAdminDashboard() {
                   </table>
                 </div>
               )}
-              <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button className="btn-secondary" onClick={() => setShowRegistrationsModal(false)}>Close</button>
-                <button className="btn-success" disabled={savingAttendance || registrations.length === 0} onClick={handleSaveAttendance}>
+              
+              <div style={{
+                marginTop: '24px',
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-end',
+                paddingTop: '24px',
+                borderTop: '1px solid #e0e0e0'
+              }}>
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => {
+                    setShowRegistrationsModal(false);
+                    setSearchQuery('');
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    borderRadius: '8px'
+                  }}
+                >Close</button>
+                <button 
+                  className="btn-success" 
+                  disabled={savingAttendance || registrations.length === 0} 
+                  onClick={handleSaveAttendance}
+                  style={{
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    borderRadius: '8px'
+                  }}
+                >
                   {savingAttendance ? 'Downloading...' : '📥 Download CSV'}
                 </button>
               </div>

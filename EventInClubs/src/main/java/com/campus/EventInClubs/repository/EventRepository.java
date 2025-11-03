@@ -61,4 +61,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findExpiredEvents(@Param("oneHourAgo") LocalDateTime oneHourAgo);
     
     long countByIsActiveTrue();
+    
+    @Query("SELECT DISTINCT e FROM Event e " +
+           "LEFT JOIN FETCH e.club " +
+           "LEFT JOIN FETCH e.organizer " +
+           "LEFT JOIN FETCH e.hall " +
+           "LEFT JOIN FETCH e.approvedBy " +
+           "WHERE (e.isActive IS NULL OR e.isActive = true) " +
+           "AND (e.status = 'PUBLISHED' OR e.status = 'APPROVED') " +
+           "AND (e.approvalStatus IS NULL OR e.approvalStatus = 'APPROVED') " +
+           "AND e.startDate IS NOT NULL " +
+           "AND e.endDate IS NOT NULL " +
+           "AND e.endDate > :now")
+    List<Event> findActiveEventsWithRelations(@Param("now") LocalDateTime now);
 }

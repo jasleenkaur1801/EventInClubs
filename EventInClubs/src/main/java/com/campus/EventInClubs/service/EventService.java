@@ -62,43 +62,13 @@ public class EventService {
     }
     
     public List<EventDto> getActiveEventsForStudents() {
-        List<Event> allEvents = eventRepository.findAll();
-        log.info("Total events in database: {}", allEvents.size());
+        // Use optimized query with JOIN FETCH to load all relationships in one query
+        List<Event> activeEvents = eventRepository.findActiveEventsWithRelations(LocalDateTime.now());
+        log.info("Found {} active events for students", activeEvents.size());
         
-        return allEvents.stream()
-                .peek(event -> log.debug("Checking event: {} - isActive: {}, status: {}, approvalStatus: {}, startDate: {}, endDate: {}", 
-                    event.getTitle(), event.getIsActive(), event.getStatus(), event.getApprovalStatus(), 
-                    event.getStartDate(), event.getEndDate()))
-                .filter(event -> {
-                    boolean isActive = event.getIsActive() == null || event.getIsActive();
-                    if (!isActive) log.debug("Event {} filtered out: not active", event.getTitle());
-                    return isActive;
-                })
-                .filter(event -> {
-                    boolean statusOk = event.getStatus() == Event.EventStatus.PUBLISHED || 
-                                      event.getStatus() == Event.EventStatus.APPROVED;
-                    if (!statusOk) log.debug("Event {} filtered out: status is {}", event.getTitle(), event.getStatus());
-                    return statusOk;
-                })
-                .filter(event -> {
-                    boolean approvalOk = event.getApprovalStatus() == null || 
-                                        event.getApprovalStatus() == Event.ApprovalStatus.APPROVED;
-                    if (!approvalOk) log.debug("Event {} filtered out: approval status is {}", event.getTitle(), event.getApprovalStatus());
-                    return approvalOk;
-                })
-                .filter(event -> {
-                    boolean hasDates = event.getStartDate() != null && event.getEndDate() != null;
-                    if (!hasDates) log.debug("Event {} filtered out: missing dates", event.getTitle());
-                    return hasDates;
-                })
-                .filter(event -> {
-                    boolean notEnded = event.getEndDate().isAfter(java.time.LocalDateTime.now());
-                    if (!notEnded) log.debug("Event {} filtered out: end date {} has passed (now: {})", 
-                        event.getTitle(), event.getEndDate(), java.time.LocalDateTime.now());
-                    return notEnded;
-                })
-                .peek(event -> log.info("Event {} passed all filters and will be shown", event.getTitle()))
-                .map(this::convertToDto)
+        // Use lightweight converter that doesn't trigger additional queries
+        return activeEvents.stream()
+                .map(this::convertToDtoLightweight)
                 .collect(Collectors.toList());
     }
     
@@ -436,6 +406,51 @@ public class EventService {
             "maxIdeasPerEvent", 2,
             "canSubmitMore", remainingSubmissions > 0
         );
+    }
+    
+    // Lightweight converter for list views - doesn't query ideas/votes to avoid N+1
+    private EventDto convertToDtoLightweight(Event event) {
+        // Get actual registration count
+        Long registrationCount = eventRegistrationRepository.countActiveByEventId(event.getId());
+        int currentParticipants = registrationCount != null ? registrationCount.intValue() : 0;
+        
+        return EventDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .startDate(event.getStartDate())
+                .endDate(event.getEndDate())
+                .registrationDeadline(event.getRegistrationDeadline())
+                .ideaSubmissionDeadline(event.getIdeaSubmissionDeadline())
+                .acceptsIdeas(event.getAcceptsIdeas())
+                .location(event.getLocation())
+                .maxParticipants(event.getMaxParticipants())
+                .currentParticipants(currentParticipants)
+                .registrationFee(event.getRegistrationFee())
+                .status(event.getStatus())
+                .type(event.getType())
+                .clubId(event.getClub().getId())
+                .clubName(event.getClub().getName())
+                .organizerId(event.getOrganizer().getId())
+                .organizerName(event.getOrganizer().getName())
+                .tags(event.getTags())
+                .imageUrl(event.getImageUrl())
+                .pptFileUrl(event.getPptFileUrl())
+                .createdAt(event.getCreatedAt())
+                .updatedAt(event.getUpdatedAt())
+                .totalVotes(0) // Skip vote calculation for list view
+                .isExpired(eventCleanupService.isEventExpired(event))
+                .isViewOnly(eventCleanupService.isEventInViewOnlyMode(event))
+                .hallId(event.getHall() != null ? event.getHall().getId() : null)
+                .hallName(event.getHall() != null ? event.getHall().getName() : null)
+                .hallCapacity(event.getHall() != null ? event.getHall().getSeatingCapacity() : null)
+                .approvalStatus(event.getApprovalStatus())
+                .rejectionReason(event.getRejectionReason())
+                .approvedById(event.getApprovedBy() != null ? event.getApprovedBy().getId() : null)
+                .approvedByName(event.getApprovedBy() != null ? event.getApprovedBy().getName() : null)
+                .approvalDate(event.getApprovalDate())
+                .submittedForApprovalDate(event.getSubmittedForApprovalDate())
+                .build();
     }
     
     private EventDto convertToDto(Event event) {
