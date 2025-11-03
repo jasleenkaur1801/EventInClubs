@@ -1,7 +1,7 @@
 import React from "react";
 import "./ClubCard.css";
 
-export default function ClubCard({ name, desc, shortName, events, category, rating }) {
+export default function ClubCard({ name, desc, shortName, events, category, rating, logoUrl }) {
   const handleViewIdeas = () => {
     console.log(`Viewing ideas for ${name}`);
     // Navigate to club ideas page or show modal
@@ -27,7 +27,13 @@ export default function ClubCard({ name, desc, shortName, events, category, rati
     <div className="club-card">
       <div className="club-header">
         <div className="club-avatar">
-          {shortName || name.split(" ").slice(0,2).map(w=>w[0]).join("")}
+          {logoUrl ? (
+            <img src={`http://localhost:8080${logoUrl}`} alt={`${name} logo`} className="club-logo-img" />
+          ) : (
+            <span className="club-initials">
+              {shortName || name.split(" ").slice(0,2).map(w=>w[0]).join("")}
+            </span>
+          )}
         </div>
         <div className="club-meta">
           <span className="club-category" style={{ backgroundColor: getCategoryColor(category) }}>

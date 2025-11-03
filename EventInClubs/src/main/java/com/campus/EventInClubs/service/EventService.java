@@ -519,9 +519,21 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
         try {
-            Event.EventStatus eventStatus = Event.EventStatus.valueOf(status.toUpperCase());
-            event.setStatus(eventStatus);
+            Event.EventStatus oldStatus = event.getStatus();
+            Event.EventStatus newStatus = Event.EventStatus.valueOf(status.toUpperCase());
+            event.setStatus(newStatus);
             Event savedEvent = eventRepository.save(event);
+            
+            // Increment club eventCount when event is marked as COMPLETED
+            if (newStatus == Event.EventStatus.COMPLETED && oldStatus != Event.EventStatus.COMPLETED) {
+                Club club = event.getClub();
+                if (club != null) {
+                    Integer currentCount = club.getEventCount() != null ? club.getEventCount() : 0;
+                    club.setEventCount(currentCount + 1);
+                    clubRepository.save(club);
+                    log.info("Incremented eventCount for club {} to {}", club.getName(), club.getEventCount());
+                }
+            }
             
             log.info("Updated event {} status to {}", eventId, status);
             return convertToDto(savedEvent);

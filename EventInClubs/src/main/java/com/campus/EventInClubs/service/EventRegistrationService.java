@@ -25,6 +25,7 @@ public class EventRegistrationService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final EmailService emailService;
     
     public EventRegistrationDto registerForEvent(Long eventId, Long userId, String notes, String rollNumber) {
         // Check if event exists and is open for registration
@@ -77,6 +78,18 @@ public class EventRegistrationService {
             eventId,
             "EVENT"
         );
+        
+        // Send confirmation email to student
+        try {
+            String clubAdminEmail = event.getClub().getAdminUser().getEmail();
+            EventRegistration savedRegistration = registrationRepository.findById(registration.getId()).orElse(null);
+            if (savedRegistration != null) {
+                emailService.sendRegistrationConfirmation(savedRegistration, clubAdminEmail);
+            }
+        } catch (Exception e) {
+            log.error("Failed to send registration confirmation email", e);
+            // Don't fail the registration if email fails
+        }
         
         log.info("User {} registered for event {}", userId, eventId);
         return registration;

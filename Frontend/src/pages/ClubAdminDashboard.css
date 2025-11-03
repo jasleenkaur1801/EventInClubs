@@ -540,6 +540,13 @@
   gap: 12px;
 }
 
+.no-activity {
+  text-align: center;
+  padding: 32px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .activity-item {
   display: flex;
   align-items: center;

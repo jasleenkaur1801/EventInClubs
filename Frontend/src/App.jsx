@@ -9,6 +9,7 @@ import Clubs from "./pages/Clubs";
 import Problems from './pages/Problems';
 import ClubTopics from './pages/ClubTopics';
 import ClubAdminDashboard from './pages/ClubAdminDashboard';
+import ClubDetailsView from './pages/ClubDetailsView';
 import ActiveEvents from './pages/ActiveEvents';
 // SUPER_ADMIN functionality enabled
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
         <Route path="/events/:eventId/ideas" element={<ProtectedRoute><ViewIdeas /></ProtectedRoute>} />
         <Route path="/admin/dashboard" element={<ProtectedRoute><ClubAdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/clubs/:clubId" element={<ProtectedRoute><ClubDetailsView /></ProtectedRoute>} />
         {/* SUPER_ADMIN functionality enabled */}
         <Route path="/superadmin/dashboard" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />

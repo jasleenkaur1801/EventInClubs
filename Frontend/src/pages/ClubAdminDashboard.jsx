@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './ClubAdminDashboard.css';
 import ClubRegistrationModal from '../components/ClubRegistrationModal';
+import ClubLogoUpdateModal from '../components/ClubLogoUpdateModal';
 import EventManagementModal from '../components/EventManagementModal';
 import EventApprovalModal from '../components/EventApprovalModal';
 import RejectedEventsPanel from '../components/RejectedEventsPanel';
@@ -17,9 +18,14 @@ export default function ClubAdminDashboard() {
   const [events, setEvents] = useState([]);
   const [activeEvents, setActiveEvents] = useState([]);
   const [rejectedEvents, setRejectedEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]); // For engagement calculation
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedClubForEdit, setSelectedClubForEdit] = useState(null);
+  const [showLogoUpdateModal, setShowLogoUpdateModal] = useState(false);
+  const [selectedClubForLogo, setSelectedClubForLogo] = useState(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -43,6 +49,13 @@ export default function ClubAdminDashboard() {
     }
   }, [location.search]);
 
+  // Update notifications when data changes
+  useEffect(() => {
+    if (proposals.length > 0 || activeEvents.length > 0 || rejectedEvents.length > 0) {
+      fetchNotifications();
+    }
+  }, [proposals, activeEvents, rejectedEvents]);
+
   // Fetch real data from APIs - wait for user data to be available
   useEffect(() => {
     let retryCount = 0;
@@ -59,6 +72,7 @@ export default function ClubAdminDashboard() {
         fetchProposals();
         fetchEvents();
         fetchActiveEvents();
+        fetchAllEvents();
         fetchNotifications();
       } else {
         retryCount++;
@@ -85,6 +99,7 @@ export default function ClubAdminDashboard() {
       console.log('Clubs loaded, fetching rejected events and active events for clubs:', clubs);
       fetchRejectedEvents(clubs);
       fetchActiveEvents(); // Refetch active events now that clubs are loaded
+      fetchAllEvents(); // Refetch all events for engagement calculation
       if (!selectedClubId) {
         setSelectedClubId(clubs[0]?.id || null);
       }
@@ -492,12 +507,81 @@ export default function ClubAdminDashboard() {
     }
   };
 
+  const fetchAllEvents = async () => {
+    try {
+      // Fetch ALL events (including completed) for engagement calculation
+      const response = await fetch('http://localhost:8080/api/events');
+      const allEventsData = await response.json();
+      
+      // Get club IDs managed by this admin
+      const adminClubIds = clubs.map(club => club.id);
+      
+      // Filter to show only events from admin's clubs
+      const adminAllEvents = (allEventsData || []).filter(event => adminClubIds.includes(event.clubId));
+      
+      console.log('All events (including completed):', adminAllEvents);
+      setAllEvents(adminAllEvents);
+    } catch (error) {
+      console.error('Error fetching all events:', error);
+      setAllEvents([]);
+    }
+  };
+
   const fetchNotifications = async () => {
-    // Mock data for now - replace with real API call
-    setNotifications([
-      { id: 1, message: 'New proposal submitted for AI Workshop', time: '2 hours ago', type: 'proposal' },
-      { id: 2, message: 'Deadline approaching for Mobile App Contest', time: '1 day ago', type: 'deadline' }
-    ]);
+    const activities = [];
+    
+    // Add recent proposals (pending/rejected events)
+    proposals.slice(0, 3).forEach(proposal => {
+      const timeAgo = getTimeAgo(proposal.createdAt);
+      activities.push({
+        id: `proposal-${proposal.id}`,
+        message: `Event proposal "${proposal.title}" is ${proposal.approvalStatus?.toLowerCase() || 'pending'}`,
+        time: timeAgo,
+        type: 'proposal'
+      });
+    });
+    
+    // Add recent active events
+    activeEvents.slice(0, 2).forEach(event => {
+      const timeAgo = getTimeAgo(event.createdAt);
+      activities.push({
+        id: `event-${event.id}`,
+        message: `Event "${event.title}" is now active`,
+        time: timeAgo,
+        type: 'event'
+      });
+    });
+    
+    // Add rejected events
+    rejectedEvents.slice(0, 2).forEach(event => {
+      const timeAgo = getTimeAgo(event.updatedAt || event.createdAt);
+      activities.push({
+        id: `rejected-${event.id}`,
+        message: `Event "${event.title}" was rejected`,
+        time: timeAgo,
+        type: 'rejected'
+      });
+    });
+    
+    // Sort by most recent and limit to 5
+    setNotifications(activities.slice(0, 5));
+  };
+
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
   };
 
   const handleCreateEvent = () => {
@@ -741,7 +825,8 @@ export default function ClubAdminDashboard() {
         shortName: clubData.shortName,
         memberCount: parseInt(clubData.memberCount) || 0,
         eventCount: 0,
-        rating: 0.0
+        rating: 0.0,
+        logoUrl: clubData.logoUrl || null
       };
       
       console.log('Sending club payload:', clubPayload);
@@ -759,6 +844,42 @@ export default function ClubAdminDashboard() {
       console.error('Error registering club:', error);
       console.error('Error details:', error.response?.data);
       alert('Failed to register club: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleEditClub = async (clubData) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || localStorage.getItem('userId');
+      
+      if (!userId) {
+        alert('You must be logged in to edit a club');
+        return;
+      }
+      
+      console.log('Updating club:', selectedClubForEdit.id, 'with data:', clubData);
+      
+      const clubPayload = {
+        name: clubData.name,
+        description: clubData.description,
+        category: clubData.category,
+        shortName: clubData.shortName,
+        memberCount: parseInt(clubData.memberCount) || selectedClubForEdit.memberCount || 0,
+        logoUrl: clubData.logoUrl || selectedClubForEdit.logoUrl || null
+      };
+      
+      await clubApi.updateClub(selectedClubForEdit.id, clubPayload, userId);
+      console.log('Club updated successfully');
+      
+      // Refresh clubs list
+      await fetchClubs();
+      setShowEditModal(false);
+      setSelectedClubForEdit(null);
+      alert('Club updated successfully!');
+    } catch (error) {
+      console.error('Error updating club:', error);
+      console.error('Error details:', error.response?.data);
+      alert('Failed to update club: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -812,7 +933,20 @@ export default function ClubAdminDashboard() {
             📈
           </div>
           <div className="stat-content">
-            <h3>85%</h3>
+            <h3>
+              {(() => {
+                // Calculate average attendance rate: how full are events on average
+                if (allEvents.length === 0) return 0;
+                const eventsWithCapacity = allEvents.filter(e => e.maxParticipants > 0);
+                if (eventsWithCapacity.length === 0) return 0;
+                const totalAttendanceRate = eventsWithCapacity.reduce((sum, event) => {
+                  const rate = (event.currentParticipants || 0) / event.maxParticipants;
+                  return sum + rate;
+                }, 0);
+                const avgAttendanceRate = (totalAttendanceRate / eventsWithCapacity.length) * 100;
+                return Math.min(100, Math.round(avgAttendanceRate));
+              })()}%
+            </h3>
             <p>Engagement Rate</p>
           </div>
         </div>
@@ -833,17 +967,25 @@ export default function ClubAdminDashboard() {
       <div className="recent-activity">
         <h3>Recent Activity</h3>
         <div className="activity-list">
-          {notifications.map(notification => (
-            <div key={notification.id} className="activity-item">
-              <div className="activity-icon">
-                {notification.type === 'proposal' ? '📄' : '🕐'}
+          {notifications.length > 0 ? (
+            notifications.map(notification => (
+              <div key={notification.id} className="activity-item">
+                <div className="activity-icon">
+                  {notification.type === 'proposal' ? '📄' : 
+                   notification.type === 'event' ? '✅' :
+                   notification.type === 'rejected' ? '❌' : '🕐'}
+                </div>
+                <div className="activity-content">
+                  <p>{notification.message}</p>
+                  <span>{notification.time}</span>
+                </div>
               </div>
-              <div className="activity-content">
-                <p>{notification.message}</p>
-                <span>{notification.time}</span>
-              </div>
+            ))
+          ) : (
+            <div className="no-activity">
+              <p>No recent activity</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
@@ -888,14 +1030,29 @@ export default function ClubAdminDashboard() {
               <div className="club-actions">
                 <button 
                   className="btn-secondary"
-                  onClick={() => navigate(`/clubs/${club.id}`)}
+                  onClick={() => {
+                    setSelectedClubForLogo(club);
+                    setShowLogoUpdateModal(true);
+                  }}
+                  title={club.logoUrl ? "Update Logo" : "Add Logo"}
+                >
+                  📷
+                  {club.logoUrl ? 'Update' : 'Add'} Logo
+                </button>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => {
+                    setSelectedClubForEdit(club);
+                    setShowEditModal(true);
+                  }}
                 >
                   ✏️
                   Edit
                 </button>
                 <button 
                   className="btn-secondary"
-                  onClick={() => navigate(`/clubs/${club.id}/view`)}
+                  onClick={() => navigate(`/admin/clubs/${club.id}`)}
+                  title="View club details"
                 >
                   👁️
                   View
@@ -1455,6 +1612,40 @@ export default function ClubAdminDashboard() {
           isOpen={showRegistrationModal}
           onClose={() => setShowRegistrationModal(false)}
           onSubmit={handleRegisterClub}
+        />
+      )}
+
+      {showEditModal && selectedClubForEdit && (
+        <ClubRegistrationModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedClubForEdit(null);
+          }}
+          onSubmit={handleEditClub}
+          initialData={{
+            name: selectedClubForEdit.name,
+            description: selectedClubForEdit.description,
+            category: selectedClubForEdit.category,
+            shortName: selectedClubForEdit.shortName,
+            memberCount: selectedClubForEdit.memberCount,
+            logoUrl: selectedClubForEdit.logoUrl
+          }}
+          isEditMode={true}
+        />
+      )}
+
+      {showLogoUpdateModal && (
+        <ClubLogoUpdateModal
+          isOpen={showLogoUpdateModal}
+          onClose={() => {
+            setShowLogoUpdateModal(false);
+            setSelectedClubForLogo(null);
+          }}
+          club={selectedClubForLogo}
+          onSuccess={() => {
+            fetchClubs(); // Refresh clubs to show updated logo
+          }}
         />
       )}
       

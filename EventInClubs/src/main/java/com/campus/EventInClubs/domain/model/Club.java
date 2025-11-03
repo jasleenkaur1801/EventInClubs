@@ -48,6 +48,9 @@ public class Club {
     @Builder.Default
     private Double rating = 0.0;
 
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_user_id")
     private User adminUser;

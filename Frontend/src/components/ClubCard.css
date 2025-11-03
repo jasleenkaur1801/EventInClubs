@@ -60,6 +60,22 @@
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
   position: relative;
   z-index: 1;
+  overflow: hidden;
+}
+
+.club-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: white;
+}
+
+.club-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .club-meta {

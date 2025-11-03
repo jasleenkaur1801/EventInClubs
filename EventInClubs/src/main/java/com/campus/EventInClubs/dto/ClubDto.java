@@ -21,6 +21,7 @@ public class ClubDto {
     private Integer memberCount;
     private Integer eventCount;
     private Double rating;
+    private String logoUrl;
     private Long adminUserId;
     private String adminUserName;
     private Boolean isActive;

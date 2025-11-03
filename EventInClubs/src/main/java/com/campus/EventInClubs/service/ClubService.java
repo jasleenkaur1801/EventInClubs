@@ -141,6 +141,7 @@ public class ClubService {
                 .memberCount(clubDto.getMemberCount() != null ? clubDto.getMemberCount() : 0)
                 .eventCount(clubDto.getEventCount() != null ? clubDto.getEventCount() : 0)
                 .rating(clubDto.getRating() != null ? clubDto.getRating() : 0.0)
+                .logoUrl(clubDto.getLogoUrl())
                 .adminUser(adminUser)
                 .isActive(true) // Active immediately
                 .approvalStatus(ApprovalStatus.APPROVED) // Auto-approved
@@ -188,6 +189,11 @@ public class ClubService {
             club.setShortName(clubDto.getShortName());
         }
         
+        if (clubDto.getLogoUrl() != null) {
+            club.setLogoUrl(clubDto.getLogoUrl());
+            log.info("Updated logo for club: {}", club.getName());
+        }
+        
         Club updatedClub = clubRepository.save(club);
         log.info("Updated club: {}", updatedClub.getName());
         
@@ -232,6 +238,7 @@ public class ClubService {
                 .memberCount(club.getMemberCount())
                 .eventCount(club.getEventCount())
                 .rating(club.getRating())
+                .logoUrl(club.getLogoUrl())
                 .adminUserId(club.getAdminUser() != null ? club.getAdminUser().getId() : null)
                 .adminUserName(club.getAdminUser() != null ? club.getAdminUser().getName() : null)
                 .approvalStatus(club.getApprovalStatus() != null ? club.getApprovalStatus().toString() : null)

@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 // Removed lucide-react import to avoid dependency issues
 import './ClubRegistrationModal.css';
+import { clubApi } from '../api/club';
 
-export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
+export default function ClubRegistrationModal({ isOpen, onClose, onSubmit, initialData = null, isEditMode = false }) {
+  const [formData, setFormData] = useState(initialData || {
     name: '',
     description: '',
     category: '',
     shortName: '',
-    memberCount: ''
+    memberCount: '',
+    logoUrl: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(initialData?.logoUrl ? `http://localhost:8080${initialData.logoUrl}` : null);
 
   const categories = ['Technology', 'Design', 'Engineering', 'Business', 'Arts', 'Sports', 'Science'];
 
@@ -23,6 +27,44 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, logo: 'Please select a valid image file (jpg, png, gif, webp)' }));
+        return;
+      }
+      
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, logo: 'Image size must be less than 5MB' }));
+        return;
+      }
+      
+      setLogoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear error
+      if (errors.logo) {
+        setErrors(prev => ({ ...prev, logo: '' }));
+      }
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setFormData(prev => ({ ...prev, logoUrl: '' }));
   };
 
   const validateForm = () => {
@@ -69,15 +111,33 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
     
     setLoading(true);
     try {
-      await onSubmit(formData);
+      let updatedFormData = { ...formData };
+      
+      // Upload logo if selected
+      if (logoFile) {
+        try {
+          const uploadResponse = await clubApi.uploadClubLogo(logoFile);
+          updatedFormData.logoUrl = uploadResponse.fileUrl;
+        } catch (uploadError) {
+          console.error('Logo upload failed:', uploadError);
+          setErrors({ general: 'Failed to upload logo. Please try again.' });
+          setLoading(false);
+          return;
+        }
+      }
+      
+      await onSubmit(updatedFormData);
       // Reset form
       setFormData({
         name: '',
         description: '',
         category: '',
         shortName: '',
-        memberCount: ''
+        memberCount: '',
+        logoUrl: ''
       });
+      setLogoFile(null);
+      setLogoPreview(null);
       setErrors({});
     } catch (error) {
       setErrors({ general: 'Failed to register club. Please try again.' });
@@ -92,8 +152,11 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
       description: '',
       category: '',
       shortName: '',
-      memberCount: ''
+      memberCount: '',
+      logoUrl: ''
     });
+    setLogoFile(null);
+    setLogoPreview(null);
     setErrors({});
     onClose();
   };
@@ -104,7 +167,7 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Register New Club</h2>
+          <h2>{isEditMode ? 'Edit Club' : 'Register New Club'}</h2>
           <button className="modal-close" onClick={handleClose}>
             ✕
           </button>
@@ -197,16 +260,48 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit }) {
             {errors.description && <span className="error-text">{errors.description}</span>}
           </div>
 
-          <div className="form-notice">
-            <p><strong>Note:</strong> Your club will be registered and active immediately upon submission.</p>
+          <div className="form-group">
+            <label htmlFor="logo">Club Logo</label>
+            <div className="logo-upload-container">
+              {logoPreview ? (
+                <div className="logo-preview">
+                  <img src={logoPreview} alt="Club logo preview" />
+                  <button type="button" className="remove-logo-btn" onClick={removeLogo}>
+                    ✕ Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="logo-upload-area">
+                  <input
+                    id="logo"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleLogoChange}
+                    className="logo-input"
+                  />
+                  <label htmlFor="logo" className="logo-upload-label">
+                    <div className="upload-icon">📷</div>
+                    <div className="upload-text">Click to upload logo</div>
+                    <div className="upload-hint">JPG, PNG, GIF or WebP (max 5MB)</div>
+                  </label>
+                </div>
+              )}
+            </div>
+            {errors.logo && <span className="error-text">{errors.logo}</span>}
           </div>
+
+          {!isEditMode && (
+            <div className="form-notice">
+              <p><strong>Note:</strong> Your club will be registered and active immediately upon submission.</p>
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={handleClose}>
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Registering...' : 'Register Club'}
+              {loading ? (isEditMode ? 'Updating...' : 'Registering...') : (isEditMode ? 'Update Club' : 'Register Club')}
             </button>
           </div>
         </form>

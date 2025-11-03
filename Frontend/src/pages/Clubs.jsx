@@ -254,6 +254,7 @@ export default function Clubs() {
                   events={club.eventCount}
                   category={club.category}
                   rating={club.rating}
+                  logoUrl={club.logoUrl}
                 />
               ))}
             </div>
