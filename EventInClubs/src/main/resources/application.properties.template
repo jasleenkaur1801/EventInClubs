@@ -3,9 +3,9 @@ spring.application.name=EventInClubs
 server.port=8080
 
 # Neon Database Configuration
-spring.datasource.url=jdbc:postgresql://ep-fancy-breeze-adwxpd0b-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require&prepareThreshold=0
-spring.datasource.username=neondb_owner
-spring.datasource.password=npg_3eJSBND0XjOk
+spring.datasource.url=jdbc:postgresql://YOUR_DATABASE_HOST/YOUR_DATABASE_NAME?sslmode=require&channel_binding=require&prepareThreshold=0
+spring.datasource.username=YOUR_DATABASE_USERNAME
+spring.datasource.password=YOUR_DATABASE_PASSWORD
 
 # Database Connection Pool Settings
 spring.datasource.hikari.maximum-pool-size=10
@@ -46,8 +46,8 @@ spring.mvc.static-path-pattern=/uploads/**
 # Email Configuration (Gmail SMTP)
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=your-email@gmail.com
-spring.mail.password=your-app-password
+spring.mail.username=YOUR_EMAIL@gmail.com
+spring.mail.password=YOUR_16_CHAR_APP_PASSWORD_NO_SPACES
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 spring.mail.properties.mail.smtp.starttls.required=true

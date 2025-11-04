@@ -1,0 +1,194 @@
+# ============================================
+# SENSITIVE FILES - NEVER COMMIT THESE
+# ============================================
+
+# Application properties with credentials
+**/application.properties
+**/application-*.properties
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# JAVA / SPRING BOOT
+# ============================================
+
+# Compiled class files
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ============================================
+# REACT / NODE.JS
+# ============================================
+
+# Dependencies
+node_modules/
+Frontend/node_modules/
+/.pnp
+.pnp.js
+
+# Production build
+Frontend/build/
+Frontend/dist/
+
+# Testing
+/coverage
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ============================================
+# LOGS
+# ============================================
+
+*.log
+logs/
+*.log.*
+log/
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+
+# ============================================
+# UPLOADS / USER CONTENT
+# ============================================
+
+uploads/
+upload/
+files/
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# DATABASE
+# ============================================
+
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# SECURITY & CREDENTIALS
+# ============================================
+
+# SSH Keys
+*.pem
+*.key
+*.pub
+
+# Certificates
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Secrets
+secrets/
+credentials/
+*.credentials
+
+# ============================================
+# DOCUMENTATION (Optional - Remove if needed)
+# ============================================
+
+# Uncomment if you don't want to commit these
+# EMAIL_SETUP.md
+# EMAIL_TROUBLESHOOTING.md
