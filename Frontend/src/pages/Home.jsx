@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Home.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
@@ -11,12 +12,9 @@ export default function Home() {
   const handleGetStarted = () => {
     const token = localStorage.getItem('token');
     if (token) {
-      window.location.href = '/clubs';
+      navigte('/clubs') ;
     } else {
-      // window.location.href = '/login';
-      navigate("/login")
-      // <Link to="/login">Login</Link>
-
+      navigate("/login");
 
     }
   };
