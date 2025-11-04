@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Explicitly set the API base URL with /api prefix
-const API_BASE = "http://localhost:8080/api";
+// Allow overriding the API base URL via environment variable, fall back to local backend
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8080/api";
 
 const http = axios.create({
   baseURL: API_BASE,
