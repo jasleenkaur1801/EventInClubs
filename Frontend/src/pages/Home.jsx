@@ -9,13 +9,15 @@ export default function Home() {
     setIsVisible(true);
   }, []);
 
+  const navigate = useNavigate();
+
   const handleGetStarted = () => {
     const token = localStorage.getItem('token');
     if (token) {
-      navigte('/clubs') ;
+      navigate('/clubs') ;
     } else {
       navigate("/login");
-
+      
     }
   };
 
