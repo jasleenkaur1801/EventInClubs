@@ -71,6 +71,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",  // Vite dev server
                 "http://localhost:3000",  // Alternative React dev server
+                "https://event-manager-mauve.vercel.app",  // Production frontend
                 "https://accounts.google.com"  // Google OAuth
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
