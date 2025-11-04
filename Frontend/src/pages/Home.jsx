@@ -13,7 +13,11 @@ export default function Home() {
     if (token) {
       window.location.href = '/clubs';
     } else {
-      window.location.href = '/login';
+      // window.location.href = '/login';
+      navigate("/login")
+      // <Link to="/login">Login</Link>
+
+
     }
   };
 
