@@ -16,7 +16,7 @@ export const clubAdminRequestApi = {
   // Get all club admin requests
   getAllRequests: async () => {
     const response = await axios.get(
-      `${API_BASE_URL}/api/club-admin-requests`,
+      `${API_BASE_URL}/club-admin-requests`,
       getAuthHeader()
     );
     return response.data;
@@ -25,7 +25,7 @@ export const clubAdminRequestApi = {
   // Get pending club admin requests
   getPendingRequests: async () => {
     const response = await axios.get(
-      `${API_BASE_URL}/api/club-admin-requests/pending`,
+      `${API_BASE_URL}/club-admin-requests/pending`,
       getAuthHeader()
     );
     return response.data;
@@ -34,7 +34,7 @@ export const clubAdminRequestApi = {
   // Get pending requests count
   getPendingRequestsCount: async () => {
     const response = await axios.get(
-      `${API_BASE_URL}/api/club-admin-requests/pending`,
+      `${API_BASE_URL}/club-admin-requests/pending`,
       getAuthHeader()
     );
     return { data: { pendingRequests: response.data.length } };
@@ -43,7 +43,7 @@ export const clubAdminRequestApi = {
   // Approve a club admin request
   approveRequest: async (requestId, clubId) => {
     const response = await axios.post(
-      `${API_BASE_URL}/api/club-admin-requests/${requestId}/approve`,
+      `${API_BASE_URL}/club-admin-requests/${requestId}/approve`,
       clubId ? { clubId: parseInt(clubId) } : {},
       getAuthHeader()
     );
@@ -53,7 +53,7 @@ export const clubAdminRequestApi = {
   // Reject a club admin request
   rejectRequest: async (requestId, reason) => {
     const response = await axios.post(
-      `${API_BASE_URL}/api/club-admin-requests/${requestId}/reject`,
+      `${API_BASE_URL}/club-admin-requests/${requestId}/reject`,
       { reason },
       getAuthHeader()
     );
