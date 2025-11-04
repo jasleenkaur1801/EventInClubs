@@ -11,17 +11,8 @@ export default function Footer() {
             <p>Connecting clubs and students to create better events.</p>
           </div>
           <div>
-            <h5>Clubs</h5>
-            <ul>
-              <li>Coding Ninjas CUIET</li>
-              <li>Google Developer Groups (GDG)</li>
-              <li>Design Thinking Club CUIET</li>
-              <li>IEEE-CIET</li>
-            </ul>
-          </div>
-          <div>
             <h5>Contact</h5>
-            <p>email: contact@ideamarket.local</p>
+            <p>email: eventinclubs@gmail.com</p>
           </div>
         </div>
 

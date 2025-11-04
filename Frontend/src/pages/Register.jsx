@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { registerUser } from "../api/auth";
 import { useNavigate, Link } from "react-router-dom";
+import GoogleSignIn from "../components/GoogleSignIn";
 import "./Auth.css";
 
 export default function Register() {
@@ -157,38 +158,45 @@ export default function Register() {
     return { text: texts[passwordStrength - 1] || "Very Weak", color: colors[passwordStrength - 1] || "#ff4444" };
   };
 
-  const handleGoogleRegister = () => {
-    /* global google */
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!window.google || !clientId) {
-      setErrors({ general: "Google signup not configured" });
-      return;
+  const handleGoogleSuccess = (response) => {
+    let userRole = "STUDENT";
+
+    if (response.user) {
+      userRole = response.user.role || "STUDENT";
+      localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem("role", userRole);
+    } else if (response.email) {
+      userRole = response.role || "STUDENT";
+      const fallbackUser = {
+        id: response.userId || response.email,
+        email: response.email,
+        name: response.name || response.email.split("@")[0],
+        role: userRole
+      };
+      localStorage.setItem("user", JSON.stringify(fallbackUser));
+      localStorage.setItem("role", userRole);
     }
-    try {
-      google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => {
-          // We'll just reuse the login flow on backend to create/sign-in
-          fetch(`${import.meta.env.VITE_API_BASE || ''}/api/auth/google`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: response.credential })
-          }).then(res => res.json()).then(data => {
-            if (data.token) {
-              localStorage.setItem('token', data.token);
-              localStorage.setItem('email', data.email);
-              localStorage.setItem('role', data.role);
-              navigate('/');
-            } else {
-              setErrors({ general: data.error || 'Google signup failed' });
-            }
-          }).catch(() => setErrors({ general: 'Google signup failed' }));
-        }
-      });
-      google.accounts.id.prompt();
-    } catch (e) {
-      setErrors({ general: 'Google signup failed to initialize' });
+
+    if (response.token) {
+      localStorage.setItem("token", response.token);
     }
+
+    setErrors({});
+    window.dispatchEvent(new Event("storage"));
+
+    setTimeout(() => {
+      if (userRole === "SUPER_ADMIN") {
+        navigate("/superadmin/dashboard", { replace: true });
+      } else if (userRole === "CLUB_ADMIN") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/clubs", { replace: true });
+      }
+    }, 800);
+  };
+
+  const handleGoogleError = (message) => {
+    setErrors({ general: message || "Google signup failed" });
   };
 
   return (
@@ -376,20 +384,22 @@ export default function Register() {
             </button>
           </form>
 
-          <div className="divider">
-            <span>or sign up with</span>
-          </div>
+          {import.meta.env.VITE_ENABLE_GOOGLE_SIGNIN === 'true' && (
+            <>
+              <div className="divider">
+                <span>or sign up with</span>
+              </div>
 
-          <div className="social-login">
-            <button
-              type="button"
-              className="social-button google"
-              onClick={handleGoogleRegister}
-            >
-              <span className="social-icon">G</span>
-              Continue with Google
-            </button>
-          </div>
+              <div className="social-login">
+                <GoogleSignIn
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  loading={loading}
+                  setLoading={setLoading}
+                />
+              </div>
+            </>
+          )}
 
           <div className="auth-footer">
             <p>Already have an account? <Link to="/login" className="link">Sign in here</Link></p>
