@@ -71,19 +71,23 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",  // Vite dev server
                 "http://localhost:3000",  // Alternative React dev server
-                "https://event-manager-mauve.vercel.app",  // Production frontend
-                "https://accounts.google.com"  // Google OAuth
+                "https://event-manager-mauve.vercel.app",  // Production frontend on Vercel
+                "http://event-manager-mauve.vercel.app",   // Production frontend on Vercel (HTTP)
+                "https://accounts.google.com",  // Google OAuth
+                "https://event-in-clubs.onrender.com"      // Backend on Render
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of(
-                "Authorization", 
-                "Content-Type", 
+                "Authorization",
+                "Content-Type",
                 "X-Requested-With",
                 "Accept",
                 "Origin",
                 "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+                "Access-Control-Request-Headers",
+                "Access-Control-Allow-Origin"
         ));
+        config.setMaxAge(3600L); // Cache preflight request results for 1 hour
         config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
