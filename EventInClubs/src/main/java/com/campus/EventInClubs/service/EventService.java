@@ -74,18 +74,17 @@ public class EventService {
     
     public List<EventDto> getEventsForClubTopics() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneDayAgo = now.minusDays(1); // 24 hours ago
+        LocalDateTime gracePeriod = now.minusDays(1); // 24 hours grace period after deadline
         return eventRepository.findAll().stream()
-                .filter(event -> event.getIsActive() == null || event.getIsActive()) // Show events that are active or have null isActive
-                // Include events in various stages: DRAFT, PENDING_APPROVAL, APPROVED, PUBLISHED, REJECTED
-                .filter(event -> event.getStatus() == Event.EventStatus.DRAFT 
-                        || event.getStatus() == Event.EventStatus.PENDING_APPROVAL
-                        || event.getStatus() == Event.EventStatus.APPROVED
-                        || event.getStatus() == Event.EventStatus.PUBLISHED
-                        || event.getStatus() == Event.EventStatus.REJECTED)
-                .filter(event -> event.getIdeaSubmissionDeadline() != null) // Must have deadline for idea submissions
-                .filter(event -> event.getIdeaSubmissionDeadline().isAfter(oneDayAgo)) // Show events until 1 day after deadline
-                // Note: Removed acceptsIdeas filter - club admins should see all events with deadlines for management
+                // Show events that are active (null or true means active)
+                .filter(event -> event.getIsActive() == null || event.getIsActive())
+                // Include events in various stages (exclude only CANCELLED and COMPLETED)
+                .filter(event -> event.getStatus() != Event.EventStatus.CANCELLED 
+                        && event.getStatus() != Event.EventStatus.COMPLETED)
+                // Must have deadline for idea submissions
+                .filter(event -> event.getIdeaSubmissionDeadline() != null)
+                // Show events until 1 day after deadline (grace period)
+                .filter(event -> event.getIdeaSubmissionDeadline().isAfter(gracePeriod))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -217,7 +216,12 @@ public class EventService {
         event.setLocation(eventDto.getLocation());
         event.setMaxParticipants(eventDto.getMaxParticipants());
         event.setRegistrationFee(eventDto.getRegistrationFee());
-        event.setStatus(eventDto.getStatus());
+        
+        // Preserve status if not explicitly provided (prevents events from losing their status)
+        if (eventDto.getStatus() != null) {
+            event.setStatus(eventDto.getStatus());
+        }
+        
         event.setType(eventDto.getType());
         event.setTags(eventDto.getTags());
         event.setImageUrl(eventDto.getImageUrl());

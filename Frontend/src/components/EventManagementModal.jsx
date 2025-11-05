@@ -244,13 +244,13 @@ export default function EventManagementModal({
         registrationFee: 0.0,
         ideaSubmissionDeadline: formData.acceptsIdeas ? (formData.ideaSubmissionDeadline || null) : null,
         acceptsIdeas: formData.acceptsIdeas,
-        // Backend will set status based on acceptsIdeas:
-        // - Direct events (acceptsIdeas=false): APPROVED and auto-approved
-        // - Idea events (acceptsIdeas=true): PUBLISHED
-        status: null,
+        // Preserve status when editing, or set PUBLISHED for new events with ideas
+        status: event ? (event.status || 'PUBLISHED') : (formData.acceptsIdeas ? 'PUBLISHED' : 'APPROVED'),
         tags: null,
         imageUrl: imageUrl,
-        hallId: formData.acceptsIdeas ? null : (formData.hallId ? parseInt(formData.hallId) : null)
+        hallId: formData.acceptsIdeas ? null : (formData.hallId ? parseInt(formData.hallId) : null),
+        // Explicitly set isActive to true to ensure event remains visible
+        isActive: true
       };
 
       console.log('Sending event data:', eventData);
