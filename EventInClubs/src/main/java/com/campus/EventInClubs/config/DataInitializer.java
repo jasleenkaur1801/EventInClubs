@@ -19,7 +19,7 @@ public class DataInitializer {
     public CommandLineRunner seedSuperAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             String email = "superadmin@eventinclubs.com";
-            String rawPassword = "SuperAdmin@2024";
+            String rawPassword = "SuperAdmin@2025";
 
             userRepository.findByEmail(email).ifPresentOrElse(
                     existing -> {},
