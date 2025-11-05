@@ -47,16 +47,17 @@ public class EventService {
     }
     
     public List<EventDto> getPublishedEventsForAdmin() {
+        LocalDateTime now = LocalDateTime.now();
         return eventRepository.findAll().stream()
                 .filter(event -> event.getIsActive() == null || event.getIsActive()) // Show events that are active or have null isActive
                 .filter(event -> event.getStatus() == Event.EventStatus.PUBLISHED || 
                                  event.getStatus() == Event.EventStatus.APPROVED) // Show both PUBLISHED and APPROVED events
-                .filter(event -> event.getApprovalStatus() == Event.ApprovalStatus.APPROVED) // Must be approved by super admin
+                .filter(event -> event.getApprovalStatus() == Event.ApprovalStatus.APPROVED) // Must be approved
                 .filter(event -> event.getStartDate() != null && event.getEndDate() != null) // Must have dates (properly approved)
                 // Location is optional - can be derived from hall or entered directly
                 .filter(event -> event.getMaxParticipants() != null) // Must have capacity (properly approved)
                 // Keep visible until 3 hours after the end time
-                .filter(event -> event.getEndDate().isAfter(java.time.LocalDateTime.now().minusHours(3)))
+                .filter(event -> event.getEndDate().isAfter(now.minusHours(3)))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }

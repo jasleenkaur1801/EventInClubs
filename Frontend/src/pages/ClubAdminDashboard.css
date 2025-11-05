@@ -2410,6 +2410,19 @@
   font-weight: 500;
 }
 
+.approved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+}
+
 /* Rejected Events Section */
 .rejected-events-section {
   padding: 20px;

@@ -1043,31 +1043,36 @@ export default function ClubAdminDashboard() {
                           </td>
                           <td>
                             <div className="table-actions">
-                              <div className="actions-dropdown">
-                                <button 
-                                  className="btn-secondary btn-sm dropdown-toggle" 
-                                  onClick={() => toggleDropdown(event.id)}
-                                  title="Actions"
-                                >
-                                  ⚙️ Actions
-                                </button>
-                                {activeDropdown === event.id && (
-                                  <div className="dropdown-menu">
-                                    <button 
-                                      className="dropdown-item"
-                                      onClick={() => handleEditEvent(event)}
-                                    >
-                                      ✏️ Edit Details
-                                    </button>
-                                    <button 
-                                      className="dropdown-item remove"
-                                      onClick={() => handleRemoveEvent(event.id)}
-                                    >
-                                      🗑️ Remove
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              {/* Show Edit/Remove only if event is not approved */}
+                              {event.status !== 'APPROVED' && event.approvalStatus !== 'APPROVED' ? (
+                                <div className="actions-dropdown">
+                                  <button 
+                                    className="btn-secondary btn-sm dropdown-toggle" 
+                                    onClick={() => toggleDropdown(event.id)}
+                                    title="Actions"
+                                  >
+                                    ⚙️ Actions
+                                  </button>
+                                  {activeDropdown === event.id && (
+                                    <div className="dropdown-menu">
+                                      <button 
+                                        className="dropdown-item"
+                                        onClick={() => handleEditEvent(event)}
+                                      >
+                                        ✏️ Edit Details
+                                      </button>
+                                      <button 
+                                        className="dropdown-item remove"
+                                        onClick={() => handleRemoveEvent(event.id)}
+                                      >
+                                        🗑️ Remove
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="approved-badge">✅ Approved</span>
+                              )}
                             </div>
                           </td>
                         </tr>
