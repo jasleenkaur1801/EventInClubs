@@ -43,6 +43,9 @@ public class EventDto {
     private Boolean isExpired;
     private Boolean isViewOnly;
     
+    // Active status
+    private Boolean isActive;
+    
     // Vote information
     private Integer totalVotes;
     

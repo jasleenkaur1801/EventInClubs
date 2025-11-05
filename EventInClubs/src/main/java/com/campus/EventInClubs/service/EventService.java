@@ -222,6 +222,12 @@ public class EventService {
         event.setTags(eventDto.getTags());
         event.setImageUrl(eventDto.getImageUrl());
         
+        // Preserve isActive if not explicitly provided (prevents events from disappearing)
+        if (eventDto.getIsActive() != null) {
+            event.setIsActive(eventDto.getIsActive());
+        }
+        // If isActive is null in DTO, keep the existing value (don't change it)
+        
         // Update hall if hallId is provided
         if (eventDto.getHallId() != null) {
             Hall hall = hallRepository.findById(eventDto.getHallId())
@@ -439,6 +445,7 @@ public class EventService {
                 .createdAt(event.getCreatedAt())
                 .updatedAt(event.getUpdatedAt())
                 .totalVotes(0) // Skip vote calculation for list view
+                .isActive(event.getIsActive())
                 .isExpired(eventCleanupService.isEventExpired(event))
                 .isViewOnly(eventCleanupService.isEventInViewOnlyMode(event))
                 .hallId(event.getHall() != null ? event.getHall().getId() : null)
@@ -501,6 +508,7 @@ public class EventService {
                 .createdAt(event.getCreatedAt())
                 .updatedAt(event.getUpdatedAt())
                 .totalVotes(totalVotes)
+            .isActive(event.getIsActive())
             .isExpired(eventCleanupService.isEventExpired(event))
             .isViewOnly(eventCleanupService.isEventInViewOnlyMode(event))
             .hallId(event.getHall() != null ? event.getHall().getId() : null)
