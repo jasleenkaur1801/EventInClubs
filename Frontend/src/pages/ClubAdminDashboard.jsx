@@ -321,7 +321,8 @@ export default function ClubAdminDashboard() {
   const fetchRejectedEvents = async (userClubs) => {
     try {
       console.log('=== Fetching Rejected Events ===');
-      const userId = localStorage.getItem('userId');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || localStorage.getItem('userId');
       if (!userId) {
         console.log('No userId found');
         return;
