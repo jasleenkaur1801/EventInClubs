@@ -413,6 +413,11 @@ const EventApprovalModal = ({ proposal, onClose, onApprove }) => {
 
       console.log('Event created:', createdEvent);
       
+      // Call onApprove to refresh the lists before closing
+      if (onApprove) {
+        await onApprove(eventData);
+      }
+      
       // Event is now in PENDING_APPROVAL status, waiting for Super Admin
       alert('Event created and submitted for Super Admin approval!\n\nStatus: Pending Approval\n\nYou will be notified once the Super Admin reviews your event.');
       onClose();

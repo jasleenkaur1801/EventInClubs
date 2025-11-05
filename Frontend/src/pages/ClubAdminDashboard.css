@@ -2390,6 +2390,26 @@
   box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
 }
 
+.event-status-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(79, 172, 254, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(79, 172, 254, 0.2);
+}
+
+.event-status-note .info-icon {
+  font-size: 16px;
+}
+
+.event-status-note .info-text {
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
 /* Rejected Events Section */
 .rejected-events-section {
   padding: 20px;

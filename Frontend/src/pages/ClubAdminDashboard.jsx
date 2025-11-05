@@ -1367,19 +1367,16 @@ export default function ClubAdminDashboard() {
               
               <div className="event-actions">
                 <button 
-                  className="btn-secondary"
-                  onClick={() => handleEditEvent(event)}
-                  title="Edit event information"
-                >
-                  ✏️ Edit Event
-                </button>
-                <button 
                   className="btn-info"
                   onClick={() => handleViewRegistrations(event.id)}
                   title="View and manage event registrations"
                 >
                   📋 Registrations ({event.currentParticipants || 0})
                 </button>
+                <div className="event-status-note">
+                  <span className="info-icon">ℹ️</span>
+                  <span className="info-text">Active events cannot be edited or removed</span>
+                </div>
               </div>
             </div>
           ))}
