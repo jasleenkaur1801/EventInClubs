@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './IdeaApprovalModal.css';
+import http from '../api/http';
 
 const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
   const [formData, setFormData] = useState({
@@ -68,13 +69,14 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
         const uploadFormData = new FormData();
         uploadFormData.append('file', file);
         
-        const uploadResponse = await fetch('http://localhost:8080/api/upload/ppt', {
-          method: 'POST',
-          body: uploadFormData
+        const uploadResponse = await http.post('/upload/ppt', uploadFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         });
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
+        if (uploadResponse.status === 200) {
+          const uploadResult = uploadResponse.data;
           setFormData(prev => ({
             ...prev,
             pptFile: file,
@@ -107,24 +109,20 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
       }
 
       // Call the approve with PPT API
-      const response = await fetch(`http://localhost:8080/api/ideas/${idea.id}/approve-with-ppt`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          status: formData.status,
-          userId: userId,
-          pptFileUrl: formData.pptFileUrl || ''
-        })
+      const params = new URLSearchParams({
+        status: formData.status,
+        userId: userId,
+        pptFileUrl: formData.pptFileUrl || ''
       });
+      
+      const response = await http.put(`/ideas/${idea.id}/approve-with-ppt?${params.toString()}`);
 
-      if (response.ok) {
-        const updatedIdea = await response.json();
+      if (response.status === 200) {
+        const updatedIdea = response.data;
         onApprove(updatedIdea);
         onClose();
       } else {
-        const errorResult = await response.json();
+        const errorResult = response.data;
         throw new Error(errorResult.error || 'Failed to update idea status');
       }
     } catch (error) {

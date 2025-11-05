@@ -8,6 +8,7 @@ import EventApprovalModal from '../components/EventApprovalModal';
 import RejectedEventsPanel from '../components/RejectedEventsPanel';
 import { clubApi } from '../api/club';
 import { eventApi } from '../api/event.js';
+import http from '../api/http';
 
 export default function ClubAdminDashboard() {
   const navigate = useNavigate();
@@ -198,8 +199,8 @@ export default function ClubAdminDashboard() {
   const fetchProposals = async () => {
     try {
       // Fetch events that accept ideas for proposals section
-      const response = await fetch('http://localhost:8080/api/events/club-topics');
-      const eventsData = await response.json();
+      const response = await http.get('/events/club-topics');
+      const eventsData = response.data;
       
       // Get club IDs managed by this admin
       const adminClubIds = clubs.map(club => club.id);
@@ -301,8 +302,8 @@ export default function ClubAdminDashboard() {
   const fetchEvents = async () => {
     try {
       // Fetch events that accept ideas for the Topics for Ideas section
-      const response = await fetch('http://localhost:8080/api/events/club-topics');
-      const eventsData = await response.json();
+      const response = await http.get('/events/club-topics');
+      const eventsData = response.data;
       
       // Get club IDs managed by this admin
       const adminClubIds = clubs.map(club => club.id);
@@ -343,14 +344,14 @@ export default function ClubAdminDashboard() {
       console.log('Fetching all rejected events...');
       
       // Fetch ALL rejected events
-      const response = await fetch('http://localhost:8080/api/events/rejected', {
+      const response = await http.get('/events/rejected', {
         headers: headers
       });
       
       console.log('Response status:', response.status);
       
-      if (response.ok) {
-        const allRejectedEvents = await response.json();
+      if (response.status === 200) {
+        const allRejectedEvents = response.data;
         
         // Filter to show only events from clubs the user manages
         const userClubIds = userClubs.map(club => club.id);
@@ -375,8 +376,8 @@ export default function ClubAdminDashboard() {
   const fetchActiveEvents = async () => {
     try {
       // Fetch published events for admin dashboard
-      const response = await fetch('http://localhost:8080/api/events/admin/published');
-      const activeEventsData = await response.json();
+      const response = await http.get('/events/admin/published');
+      const activeEventsData = response.data;
       
       // Get club IDs managed by this admin
       const adminClubIds = clubs.map(club => club.id);
@@ -398,10 +399,8 @@ export default function ClubAdminDashboard() {
         const counts = await Promise.all(
           (list || []).map(async ev => {
             try {
-              const r = await fetch(`http://localhost:8080/api/event-registrations/event/${ev.id}/count`);
-              if (!r.ok) return { id: ev.id, count: ev.currentParticipants || 0 };
-              const json = await r.json();
-              return { id: ev.id, count: json?.count ?? (ev.currentParticipants || 0) };
+              const r = await http.get(`/event-registrations/event/${ev.id}/count`);
+              return { id: ev.id, count: r.data?.count ?? (ev.currentParticipants || 0) };
             } catch {
               return { id: ev.id, count: ev.currentParticipants || 0 };
             }
@@ -420,8 +419,8 @@ export default function ClubAdminDashboard() {
   const fetchAllEvents = async () => {
     try {
       // Fetch ALL events (including completed) for engagement calculation
-      const response = await fetch('http://localhost:8080/api/events');
-      const allEventsData = await response.json();
+      const response = await http.get('/events');
+      const allEventsData = response.data;
       
       // Get club IDs managed by this admin
       const adminClubIds = clubs.map(club => club.id);
@@ -560,9 +559,9 @@ export default function ClubAdminDashboard() {
     try {
       setRegistrationsEventId(eventId);
       // Fetch registrations for this event
-      const response = await fetch(`http://localhost:8080/api/event-registrations/event/${eventId}`);
-      if (response.ok) {
-        const data = await response.json();
+      const response = await http.get(`/event-registrations/event/${eventId}`);
+      if (response.status === 200) {
+        const data = response.data;
         setRegistrations(data);
         // Sync the visible registrations count on the Active Events card immediately
         setActiveEvents(prev => (prev || []).map(ev => ev.id === eventId ? { ...ev, currentParticipants: (data || []).length } : ev));
@@ -595,11 +594,9 @@ export default function ClubAdminDashboard() {
     
     try {
       // Update backend immediately
-      const response = await fetch(`http://localhost:8080/api/event-registrations/${registrationId}/status?status=${newStatus}`, { 
-        method: 'PUT' 
-      });
+      const response = await http.put(`/event-registrations/${registrationId}/status?status=${newStatus}`);
       
-      if (response.ok) {
+      if (response.status === 200) {
         // Update local state
         setAttendanceMap(prev => {
           const updated = { ...prev, [registrationId]: newPresentStatus };
@@ -669,9 +666,9 @@ export default function ClubAdminDashboard() {
       if (registrationsEventId) {
         localStorage.removeItem(`attendance:event:${registrationsEventId}`);
         // Reload registrations to get updated statuses and refresh the modal
-        const response = await fetch(`http://localhost:8080/api/event-registrations/event/${registrationsEventId}`);
-        if (response.ok) {
-          const data = await response.json();
+        const response = await http.get(`/event-registrations/event/${registrationsEventId}`);
+        if (response.status === 200) {
+          const data = response.data;
           setRegistrations(data);
           // Update attendance map with fresh status from backend
           const freshMap = (data || []).reduce((acc, reg) => {

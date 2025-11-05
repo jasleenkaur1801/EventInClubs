@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import EventCreationModal from './EventCreationModal';
 import './RejectedEventsPanel.css';
+import http from '../api/http';
 
 const RejectedEventsPanel = ({ clubId }) => {
   const [rejectedEvents, setRejectedEvents] = useState([]);
@@ -28,27 +29,24 @@ const RejectedEventsPanel = ({ clubId }) => {
       }
       
       const url = clubId && clubId !== 'all' ? 
-        `http://localhost:8080/api/events/rejected/${clubId}` : 
-        `http://localhost:8080/api/events/rejected`;
+        `/events/rejected/${clubId}` : 
+        `/events/rejected`;
       
       console.log('Request URL:', url);
       console.log('Headers:', headers);
       
-      const response = await fetch(url, {
-        credentials: 'include',
+      const response = await http.get(url, {
         headers: headers
       });
       
       console.log('Response status:', response.status);
       
-      if (response.ok) {
-        const events = await response.json();
+      if (response.status === 200) {
+        const events = response.data;
         console.log('Rejected events fetched:', events);
         setRejectedEvents(events);
       } else {
         console.error('Failed to fetch rejected events. Status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Error fetching rejected events:', error);
@@ -92,19 +90,17 @@ const RejectedEventsPanel = ({ clubId }) => {
         params.append('hallId', eventData.hallId.toString());
       }
 
-      const submitResponse = await fetch(`http://localhost:8080/api/events/resubmit-rejected?${params.toString()}`, {
-        method: 'POST',
-        headers: headers,
-        credentials: 'include'
+      const submitResponse = await http.post(`/events/resubmit-rejected?${params.toString()}`, eventData, {
+        headers: headers
       });
 
-      if (submitResponse.ok) {
+      if (submitResponse.status === 200) {
         alert('Event resubmitted successfully! It will be reviewed by the Super Admin.');
         setShowEditModal(false);
         setSelectedEvent(null);
         fetchRejectedEvents(); // Refresh the list
       } else {
-        const error = await submitResponse.json().catch(() => ({}));
+        const error = submitResponse.data || {};
         throw new Error(error.error || 'Failed to resubmit event');
       }
     } catch (error) {

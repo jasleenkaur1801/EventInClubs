@@ -5,6 +5,7 @@ import { eventApi } from '../api/event';
 import './ClubDetailsView.css';
 
 export default function ClubDetailsView() {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
   const { clubId } = useParams();
   const navigate = useNavigate();
   const [club, setClub] = useState(null);
@@ -151,7 +152,7 @@ export default function ClubDetailsView() {
         <div className="club-header-section">
           <div className="club-logo-large">
             {club.logoUrl ? (
-              <img src={`http://localhost:8080${club.logoUrl}`} alt={`${club.name} logo`} />
+              <img src={`${API_BASE_URL}${club.logoUrl}`} alt={`${club.name} logo`} />
             ) : (
               <div className="logo-placeholder">
                 {club.shortName || club.name.split(' ').slice(0, 2).map(w => w[0]).join('')}

@@ -1,6 +1,8 @@
 import React from "react";
 import "./ClubCard.css";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 export default function ClubCard({ name, desc, shortName, events, category, rating, logoUrl }) {
   const handleViewIdeas = () => {
     console.log(`Viewing ideas for ${name}`);
@@ -28,7 +30,7 @@ export default function ClubCard({ name, desc, shortName, events, category, rati
       <div className="club-header">
         <div className="club-avatar">
           {logoUrl ? (
-            <img src={`http://localhost:8080${logoUrl}`} alt={`${name} logo`} className="club-logo-img" />
+            <img src={`${API_BASE_URL}${logoUrl}`} alt={`${name} logo`} className="club-logo-img" />
           ) : (
             <span className="club-initials">
               {shortName || name.split(" ").slice(0,2).map(w=>w[0]).join("")}

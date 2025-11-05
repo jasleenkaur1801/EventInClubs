@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { eventApi } from '../api/event';
+import http from '../api/http';
 import './ActiveEvents.css';
 
 const ActiveEvents = () => {
@@ -22,8 +23,8 @@ const ActiveEvents = () => {
     try {
       setLoading(true);
       // Fetch active events specifically for students
-      const response = await fetch('http://localhost:8080/api/events/active');
-      const activeEvents = await response.json();
+      const response = await http.get('/events/active');
+      const activeEvents = response.data;
       
       setEvents(activeEvents);
     } catch (error) {
@@ -50,26 +51,22 @@ const ActiveEvents = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8080/api/event-registrations/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          eventId: selectedEvent.id,
-          userId: user.id,
-          rollNumber: registrationData.rollNumber,
-          notes: registrationData.notes
-        })
+      const params = new URLSearchParams({
+        eventId: selectedEvent.id,
+        userId: user.id,
+        rollNumber: registrationData.rollNumber,
+        notes: registrationData.notes
       });
+      
+      const response = await http.post(`/event-registrations/register?${params.toString()}`);
 
-      if (response.ok) {
-        const result = await response.json();
+      if (response.status === 200) {
+        const result = response.data;
         alert('Registration successful! You will receive a confirmation notification.');
         setShowRegistrationModal(false);
         fetchActiveEvents(); // Refresh events to update registration count
       } else {
-        const error = await response.json();
+        const error = response.data;
         alert(`Registration failed: ${error.error || 'Please try again'}`);
       }
     } catch (error) {

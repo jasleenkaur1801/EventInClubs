@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Award, Users, Star, Crown } from 'lucide-react';
+import http from '../api/http';
 import '../styles/Leaderboard.css';
 
 const Leaderboard = () => {
@@ -20,19 +21,18 @@ const Leaderboard = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8080/api/achievements/leaderboard?limit=50', {
-        method: 'GET',
+      const response = await http.get('/achievements/leaderboard?limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch leaderboard data');
       }
 
-      const data = await response.json();
+      const data = response.data;
       setLeaderboardData(data);
       setLoading(false);
     } catch (err) {

@@ -10,21 +10,16 @@ const PptViewer = ({ pptUrl, ideaTitle, item, onClose }) => {
   const actualPptUrl = pptUrl || (item?.pptFileUrl);
   const actualTitle = ideaTitle || item?.title || 'Presentation';
 
+  // Get API base URL from environment variable
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
   // Detect if we're on localhost or production
   const isLocalhost = window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1' ||
                       window.location.hostname.includes('192.168.');
 
   // Get the full URL for the PPT file
-  const getFullPptUrl = () => {
-    if (isLocalhost) {
-      return `http://localhost:8080${actualPptUrl}`;
-    }
-    // In production, use the actual domain
-    return `${window.location.protocol}//${window.location.hostname}${actualPptUrl}`;
-  };
-
-  const fullPptUrl = getFullPptUrl();
+  const fullPptUrl = `${API_BASE_URL}${actualPptUrl}`;
 
   useEffect(() => {
     // If not localhost, try to use Microsoft Office Online Viewer

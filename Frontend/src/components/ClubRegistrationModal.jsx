@@ -15,7 +15,8 @@ export default function ClubRegistrationModal({ isOpen, onClose, onSubmit, initi
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(initialData?.logoUrl ? `http://localhost:8080${initialData.logoUrl}` : null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+  const [logoPreview, setLogoPreview] = useState(initialData?.logoUrl ? `${API_BASE_URL}${initialData.logoUrl}` : null);
 
   const categories = ['Technology', 'Design', 'Engineering', 'Business', 'Arts', 'Sports', 'Science'];
 
