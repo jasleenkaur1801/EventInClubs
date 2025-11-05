@@ -41,6 +41,7 @@ export default function ClubAdminDashboard() {
   const [registrationsEventTitle, setRegistrationsEventTitle] = useState('');
   const [registrationsEventId, setRegistrationsEventId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [proposalStatusFilter, setProposalStatusFilter] = useState('all');
   // Handle URL parameters for tab navigation
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -1086,7 +1087,7 @@ export default function ClubAdminDashboard() {
       <div className="section-header">
         <h2>Proposal Management</h2>
         <div className="filters">
-          <select>
+          <select value={proposalStatusFilter} onChange={(e) => setProposalStatusFilter(e.target.value)}>
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -1095,7 +1096,19 @@ export default function ClubAdminDashboard() {
         </div>
       </div>
       <div className="proposals-grid">
-        {proposals.map(proposal => (
+        {proposals
+          .filter(proposal => {
+            if (proposalStatusFilter === 'all') return true;
+            
+            const proposalStatus = proposal.status === 'PUBLISHED' && proposal.approvalStatus === 'APPROVED' 
+              ? 'approved' 
+              : proposal.status === 'REJECTED' 
+              ? 'rejected' 
+              : 'pending';
+            
+            return proposalStatus === proposalStatusFilter;
+          })
+          .map(proposal => (
           <div key={proposal.id} className="proposal-card">
             <div className="proposal-header">
               <div className="proposal-title-section">
