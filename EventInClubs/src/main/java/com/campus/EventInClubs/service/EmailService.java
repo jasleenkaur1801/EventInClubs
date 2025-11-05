@@ -5,6 +5,7 @@ import com.campus.EventInClubs.domain.model.EventRegistration;
 import com.campus.EventInClubs.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -21,6 +22,9 @@ public class EmailService {
     
     private final JavaMailSender mailSender;
     
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+    
     /**
      * Send registration confirmation email to student
      */
@@ -32,7 +36,9 @@ public class EmailService {
             Event event = registration.getEvent();
             User student = registration.getUser();
             
-            helper.setFrom(clubAdminEmail);
+            // Use authenticated email as sender, set club admin as reply-to
+            helper.setFrom(fromEmail);
+            helper.setReplyTo(clubAdminEmail);
             helper.setTo(student.getEmail());
             helper.setSubject("Registration Confirmed: " + event.getTitle());
             
@@ -45,6 +51,8 @@ public class EmailService {
         } catch (MessagingException e) {
             log.error("Failed to send registration confirmation email", e);
             // Don't throw exception - email failure shouldn't break registration
+        } catch (Exception e) {
+            log.error("Unexpected error sending registration confirmation email", e);
         }
     }
     
@@ -59,7 +67,9 @@ public class EmailService {
             Event event = registration.getEvent();
             User student = registration.getUser();
             
-            helper.setFrom(clubAdminEmail);
+            // Use authenticated email as sender, set club admin as reply-to
+            helper.setFrom(fromEmail);
+            helper.setReplyTo(clubAdminEmail);
             helper.setTo(student.getEmail());
             helper.setSubject("Reminder: " + event.getTitle() + " Today!");
             
@@ -71,6 +81,8 @@ public class EmailService {
             
         } catch (MessagingException e) {
             log.error("Failed to send event reminder email", e);
+        } catch (Exception e) {
+            log.error("Unexpected error sending event reminder email", e);
         }
     }
     
