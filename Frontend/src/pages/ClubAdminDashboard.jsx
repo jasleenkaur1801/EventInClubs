@@ -1100,10 +1100,13 @@ export default function ClubAdminDashboard() {
           .filter(proposal => {
             if (proposalStatusFilter === 'all') return true;
             
-            const proposalStatus = proposal.status === 'PUBLISHED' && proposal.approvalStatus === 'APPROVED' 
-              ? 'approved' 
-              : proposal.status === 'REJECTED' 
-              ? 'rejected' 
+            // Determine the actual status of the proposal
+            const isApproved = (proposal.status === 'PUBLISHED' && proposal.approvalStatus === 'APPROVED') ||
+                              (proposal.status === 'APPROVED' && proposal.approvalStatus === 'APPROVED');
+            const isRejected = proposal.status === 'REJECTED' || proposal.approvalStatus === 'REJECTED';
+            
+            const proposalStatus = isApproved ? 'approved' 
+              : isRejected ? 'rejected' 
               : 'pending';
             
             return proposalStatus === proposalStatusFilter;
