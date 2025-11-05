@@ -70,8 +70,6 @@ export default function ClubAdminDashboard() {
       if (userId) {
         console.log('User data available, fetching dashboard data for user:', userId);
         fetchClubs();
-        fetchProposals();
-        fetchEvents();
         fetchActiveEvents();
         fetchAllEvents();
         fetchNotifications();
@@ -99,6 +97,9 @@ export default function ClubAdminDashboard() {
     if (clubs.length > 0) {
       console.log('Clubs loaded, fetching rejected events and active events for clubs:', clubs);
       fetchRejectedEvents(clubs);
+      // Fetch proposals/topics and events now that admin club IDs are available
+      fetchProposals();
+      fetchEvents();
       fetchActiveEvents(); // Refetch active events now that clubs are loaded
       fetchAllEvents(); // Refetch all events for engagement calculation
       if (!selectedClubId) {
@@ -202,12 +203,12 @@ export default function ClubAdminDashboard() {
       const response = await http.get('/events/club-topics');
       const eventsData = response.data;
       
-      // Get club IDs managed by this admin
-      const adminClubIds = clubs.map(club => club.id);
+      // Get club IDs managed by this admin (normalized to numbers)
+      const adminClubIds = clubs.map(club => Number(club.id));
       console.log('Admin club IDs:', adminClubIds);
       
       const proposalsData = eventsData
-        .filter(event => adminClubIds.includes(event.clubId)) // Filter by admin's clubs
+        .filter(event => adminClubIds.includes(Number(event.clubId))) // Filter by admin's clubs
         .map(event => ({
           id: event.id,
           title: event.title,
@@ -305,11 +306,11 @@ export default function ClubAdminDashboard() {
       const response = await http.get('/events/club-topics');
       const eventsData = response.data;
       
-      // Get club IDs managed by this admin
-      const adminClubIds = clubs.map(club => club.id);
+      // Get club IDs managed by this admin (normalized to numbers)
+      const adminClubIds = clubs.map(club => Number(club.id));
       
       // Filter events to show only those from admin's clubs
-      const adminEvents = eventsData.filter(event => adminClubIds.includes(event.clubId));
+      const adminEvents = eventsData.filter(event => adminClubIds.includes(Number(event.clubId)));
       setEvents(adminEvents || []);
     } catch (error) {
       console.error('Error fetching events:', error);
