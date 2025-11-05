@@ -194,6 +194,18 @@ public class ClubService {
             log.info("Updated logo for club: {}", club.getName());
         }
         
+        if (clubDto.getMemberCount() != null) {
+            club.setMemberCount(clubDto.getMemberCount());
+        }
+        
+        if (clubDto.getEventCount() != null) {
+            club.setEventCount(clubDto.getEventCount());
+        }
+        
+        if (clubDto.getRating() != null) {
+            club.setRating(clubDto.getRating());
+        }
+        
         Club updatedClub = clubRepository.save(club);
         log.info("Updated club: {}", updatedClub.getName());
         
