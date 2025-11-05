@@ -238,42 +238,8 @@ export default function ClubAdminDashboard() {
       
     } catch (error) {
       console.error('Error fetching proposals:', error);
-      // Fallback to mock proposals if API fails
-      const mockProposals = [
-        {
-          id: 1,
-          title: "Tech Workshop Ideas",
-          description: "Submit ideas for upcoming technology workshops",
-          clubName: "Coding Ninjas",
-          type: "WORKSHOP",
-          date: new Date().toLocaleDateString(),
-          votes: 12,
-          submissionDeadline: "2024-02-15",
-          status: 'active',
-          upvotes: 12,
-          ideas: []
-        },
-        {
-          id: 2,
-          title: "Design Challenge",
-          description: "Creative design challenge for UI/UX projects",
-          clubName: "Design Studio",
-          type: "COMPETITION",
-          date: new Date().toLocaleDateString(),
-          votes: 8,
-          submissionDeadline: "2024-02-20",
-          status: 'active',
-          upvotes: 8,
-          ideas: []
-        }
-      ];
-      
-      // Apply same filtering logic to mock proposals
-      const activeMockProposals = mockProposals.filter(proposal => 
-        isProposalActive(proposal.submissionDeadline)
-      );
-      
-      setProposals(activeMockProposals);
+      // Set empty array if API fails - no mock data
+      setProposals([]);
     }
   };
 
@@ -346,26 +312,8 @@ export default function ClubAdminDashboard() {
       setEvents(adminEvents || []);
     } catch (error) {
       console.error('Error fetching events:', error);
-      // Fallback to mock events if API fails
-      const mockEvents = [
-        {
-          id: 1,
-          title: "Tech Workshop",
-          description: "Learn latest technologies",
-          clubName: "Coding Ninjas",
-          eventDate: "2024-02-15",
-          status: 'active'
-        },
-        {
-          id: 2,
-          title: "Design Meetup",
-          description: "UI/UX design discussion",
-          clubName: "Design Studio", 
-          eventDate: "2024-02-20",
-          status: 'active'
-        }
-      ];
-      setEvents(mockEvents);
+      // Set empty array if API fails - no mock data
+      setEvents([]);
     }
   };
 
@@ -464,46 +412,8 @@ export default function ClubAdminDashboard() {
       } catch {}
     } catch (error) {
       console.error('Error fetching active events:', error);
-      // Fallback to mock active events if API fails
-      const mockActiveEvents = [
-        {
-          id: 1,
-          title: "Tech Workshop 2024",
-          description: "Learn latest technologies and frameworks",
-          clubName: "Coding Ninjas",
-          clubId: 1,
-          type: "WORKSHOP",
-          startDate: "2024-03-15T10:00",
-          endDate: "2024-03-15T17:00",
-          location: "Tech Hub, Room 101",
-          maxParticipants: 50,
-          currentParticipants: 25,
-          registrationFee: 500,
-          imageUrl: "/uploads/posters/tech-workshop.jpg",
-          status: 'PUBLISHED',
-          createdAt: "2024-02-01T10:00",
-          updatedAt: "2024-02-10T15:30"
-        },
-        {
-          id: 2,
-          title: "Design Hackathon",
-          description: "24-hour design challenge for creative minds",
-          clubName: "Design Studio",
-          clubId: 2,
-          type: "HACKATHON",
-          startDate: "2024-03-20T18:00",
-          endDate: "2024-03-21T18:00",
-          location: "Innovation Center",
-          maxParticipants: 100,
-          currentParticipants: 75,
-          registrationFee: 0,
-          imageUrl: "/uploads/posters/design-hackathon.jpg",
-          status: 'PUBLISHED',
-          createdAt: "2024-02-05T14:00",
-          updatedAt: "2024-02-15T09:20"
-        }
-      ];
-      setActiveEvents(mockActiveEvents);
+      // Set empty array if API fails - no mock data
+      setActiveEvents([]);
     }
   };
 
