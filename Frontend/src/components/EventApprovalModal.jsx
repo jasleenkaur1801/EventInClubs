@@ -415,7 +415,7 @@ const EventApprovalModal = ({ proposal, onClose, onApprove }) => {
       
       // Call onApprove to refresh the lists before closing
       if (onApprove) {
-        await onApprove(eventData);
+        await onApprove(); // Don't pass eventData, just trigger refresh
       }
       
       // Event is now in PENDING_APPROVAL status, waiting for Super Admin

@@ -281,22 +281,19 @@ export default function ClubAdminDashboard() {
     setShowApprovalModal(true);
   };
 
-  const handleEventApproval = async (eventData) => {
+  const handleEventApproval = async () => {
     try {
-      // Call API to approve and create the full event
-      const approvedEvent = await eventApi.approveEventProposal(eventData);
-      console.log('Event approved and created:', approvedEvent);
+      console.log('Event approved, refreshing lists...');
       
       // Refresh proposals, events, and active events lists
       await fetchProposals();
       await fetchEvents();
       await fetchActiveEvents();
       
-      // Show success message
-      alert('Event approved and created successfully!');
+      console.log('Lists refreshed successfully');
     } catch (error) {
-      console.error('Error approving event:', error);
-      throw error; // Re-throw to be handled by the modal
+      console.error('Error refreshing after approval:', error);
+      // Don't throw - just log the error, approval already succeeded
     }
   };
 
