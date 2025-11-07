@@ -16,7 +16,9 @@ const ActiveEvents = () => {
     leaderName: '',
     leaderEmail: '',
     leaderRollNumber: '',
-    memberRollNumbers: ['']
+    memberRollNumbers: [''],
+    memberNames: [''],
+    memberEmails: ['']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -73,7 +75,9 @@ const ActiveEvents = () => {
         leaderName: user?.name || '',
         leaderEmail: user?.email || '',
         leaderRollNumber: '',
-        memberRollNumbers: Array(additionalMembers).fill('')
+        memberRollNumbers: Array(additionalMembers).fill(''),
+        memberNames: Array(additionalMembers).fill(''),
+        memberEmails: Array(additionalMembers).fill('')
       });
     } else {
       console.log('Setting up INDIVIDUAL registration form');
@@ -144,9 +148,23 @@ const ActiveEvents = () => {
           notes: registrationData.notes || ''
         });
         
+        // Add leader name and email, then additional members' details
+        const allNames = [user.name, ...registrationData.memberNames.filter(n => n.trim())];
+        const allEmails = [user.email, ...registrationData.memberEmails.filter(e => e.trim())];
+        
         // Add each member roll number as a separate parameter
         allRollNumbers.forEach(rollNo => {
           params.append('memberRollNumbers', rollNo.trim());
+        });
+        
+        // Add member names
+        allNames.forEach(name => {
+          params.append('memberNames', name.trim());
+        });
+        
+        // Add member emails
+        allEmails.forEach(email => {
+          params.append('memberEmails', email.trim());
         });
         
         response = await http.post(`/team-registrations/register?${params.toString()}`);
@@ -432,18 +450,12 @@ const ActiveEvents = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Team Leader (You)</label>
-                      <input
-                        type="text"
-                        value={registrationData.leaderName}
-                        disabled
-                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-                      />
+                      <label>Team Leader Email (You)</label>
                       <input
                         type="email"
                         value={registrationData.leaderEmail}
                         disabled
-                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed', marginTop: '8px' }}
+                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                       />
                       <input
                         type="text"
@@ -468,7 +480,11 @@ const ActiveEvents = () => {
                           setRegistrationData({
                             ...registrationData,
                             memberRollNumbers: Array(additionalSize).fill('').map((_, i) => 
-                              registrationData.memberRollNumbers[i] || '')
+                              registrationData.memberRollNumbers[i] || ''),
+                            memberNames: Array(additionalSize).fill('').map((_, i) => 
+                              registrationData.memberNames[i] || ''),
+                            memberEmails: Array(additionalSize).fill('').map((_, i) => 
+                              registrationData.memberEmails[i] || '')
                           });
                         }}
                         placeholder={`0 to ${selectedEvent.maxTeamMembers - 1}`}
@@ -478,20 +494,47 @@ const ActiveEvents = () => {
 
                     {registrationData.memberRollNumbers.length > 0 && (
                       <div className="form-group">
-                        <label>Additional Team Members' Roll Numbers</label>
+                        <label>Additional Team Members' Details</label>
                         {registrationData.memberRollNumbers.map((rollNo, index) => (
-                          <input
-                            key={index}
-                            type="text"
-                            value={rollNo}
-                            onChange={(e) => {
-                              const newRollNumbers = [...registrationData.memberRollNumbers];
-                              newRollNumbers[index] = e.target.value;
-                              setRegistrationData({...registrationData, memberRollNumbers: newRollNumbers});
-                            }}
-                            placeholder={`Member ${index + 2} roll number`}
-                            style={{ marginBottom: '8px' }}
-                          />
+                          <div key={index} style={{ marginBottom: '16px', padding: '12px', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+                            <div style={{ fontWeight: '600', marginBottom: '8px', color: '#7c3aed' }}>Member {index + 2}</div>
+                            <input
+                              type="text"
+                              value={registrationData.memberNames[index]}
+                              onChange={(e) => {
+                                const newNames = [...registrationData.memberNames];
+                                newNames[index] = e.target.value;
+                                setRegistrationData({...registrationData, memberNames: newNames});
+                              }}
+                              placeholder="Member name *"
+                              required
+                              style={{ marginBottom: '8px', width: '100%' }}
+                            />
+                            <input
+                              type="email"
+                              value={registrationData.memberEmails[index]}
+                              onChange={(e) => {
+                                const newEmails = [...registrationData.memberEmails];
+                                newEmails[index] = e.target.value;
+                                setRegistrationData({...registrationData, memberEmails: newEmails});
+                              }}
+                              placeholder="Member email *"
+                              required
+                              style={{ marginBottom: '8px', width: '100%' }}
+                            />
+                            <input
+                              type="text"
+                              value={rollNo}
+                              onChange={(e) => {
+                                const newRollNumbers = [...registrationData.memberRollNumbers];
+                                newRollNumbers[index] = e.target.value;
+                                setRegistrationData({...registrationData, memberRollNumbers: newRollNumbers});
+                              }}
+                              placeholder="Member roll number *"
+                              required
+                              style={{ width: '100%' }}
+                            />
+                          </div>
                         ))}
                       </div>
                     )}

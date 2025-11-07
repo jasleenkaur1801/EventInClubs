@@ -25,13 +25,15 @@ public class TeamRegistrationController {
             @RequestParam Long userId,
             @RequestParam String teamName,
             @RequestParam List<String> memberRollNumbers,
+            @RequestParam(required = false) List<String> memberNames,
+            @RequestParam(required = false) List<String> memberEmails,
             @RequestParam(required = false) String notes) {
         try {
             log.info("Team registration request - Event: {}, User: {}, Team: {}, Members: {}", 
                     eventId, userId, teamName, memberRollNumbers.size());
             
             TeamRegistrationDto registration = teamRegistrationService.registerTeam(
-                    eventId, userId, teamName, memberRollNumbers, notes);
+                    eventId, userId, teamName, memberRollNumbers, memberNames, memberEmails, notes);
             
             return ResponseEntity.ok(registration);
         } catch (RuntimeException e) {

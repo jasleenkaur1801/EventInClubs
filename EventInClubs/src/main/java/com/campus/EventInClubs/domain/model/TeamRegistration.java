@@ -31,6 +31,12 @@ public class TeamRegistration {
     @Column(name = "member_roll_numbers", nullable = false, columnDefinition = "TEXT")
     private String memberRollNumbers; // Comma-separated roll numbers
     
+    @Column(name = "member_names", columnDefinition = "TEXT")
+    private String memberNames; // Comma-separated member names
+    
+    @Column(name = "member_emails", columnDefinition = "TEXT")
+    private String memberEmails; // Comma-separated member emails
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_by", nullable = false)
     private User registeredBy;

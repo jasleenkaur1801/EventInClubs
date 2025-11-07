@@ -28,7 +28,8 @@ public class TeamRegistrationService {
     private final NotificationService notificationService;
     
     public TeamRegistrationDto registerTeam(Long eventId, Long userId, String teamName, 
-                                           List<String> memberRollNumbers, String notes) {
+                                           List<String> memberRollNumbers, List<String> memberNames, 
+                                           List<String> memberEmails, String notes) {
         // Validate event exists and is a team event
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -62,11 +63,16 @@ public class TeamRegistrationService {
         
         // Create team registration
         String rollNumbersStr = String.join(",", memberRollNumbers);
+        String namesStr = (memberNames != null && !memberNames.isEmpty()) ? String.join(",", memberNames) : null;
+        String emailsStr = (memberEmails != null && !memberEmails.isEmpty()) ? String.join(",", memberEmails) : null;
+        
         TeamRegistration teamRegistration = TeamRegistration.builder()
                 .event(event)
                 .teamName(teamName)
                 .teamSize(teamSize)
                 .memberRollNumbers(rollNumbersStr)
+                .memberNames(namesStr)
+                .memberEmails(emailsStr)
                 .registeredBy(user)
                 .status(TeamRegistration.RegistrationStatus.REGISTERED)
                 .registrationNotes(notes)
@@ -128,6 +134,12 @@ public class TeamRegistrationService {
     
     private TeamRegistrationDto convertToDto(TeamRegistration team) {
         List<String> rollNumbers = Arrays.asList(team.getMemberRollNumbers().split(","));
+        List<String> names = (team.getMemberNames() != null && !team.getMemberNames().isEmpty()) 
+                ? Arrays.asList(team.getMemberNames().split(",")) 
+                : null;
+        List<String> emails = (team.getMemberEmails() != null && !team.getMemberEmails().isEmpty()) 
+                ? Arrays.asList(team.getMemberEmails().split(",")) 
+                : null;
         
         return TeamRegistrationDto.builder()
                 .id(team.getId())
@@ -136,8 +148,11 @@ public class TeamRegistrationService {
                 .teamName(team.getTeamName())
                 .teamSize(team.getTeamSize())
                 .memberRollNumbers(rollNumbers)
+                .memberNames(names)
+                .memberEmails(emails)
                 .registeredById(team.getRegisteredBy().getId())
                 .registeredByName(team.getRegisteredBy().getName())
+                .registeredByEmail(team.getRegisteredBy().getEmail())
                 .status(team.getStatus().name())
                 .registrationNotes(team.getRegistrationNotes())
                 .paymentStatus(team.getPaymentStatus().name())
