@@ -84,7 +84,7 @@ public class TeamRegistrationService {
             event.getOrganizer().getId(),
             "New Team Registration",
             String.format("Team '%s' has registered for event '%s'", teamName, event.getTitle()),
-            com.campus.EventInClubs.domain.model.Notification.NotificationType.REGISTRATION,
+            com.campus.EventInClubs.domain.model.Notification.NotificationType.EVENT_ANNOUNCEMENT,
             event.getId(),
             "EVENT"
         );
