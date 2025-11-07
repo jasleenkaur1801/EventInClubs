@@ -260,6 +260,13 @@ export default function EventManagementModal({
 
       let imageUrl = formData.imageUrl;
 
+      // Debug: Log formData to see what we're working with
+      console.log('=== Form Data Before Submission ===');
+      console.log('acceptsIdeas:', formData.acceptsIdeas);
+      console.log('isTeamEvent:', formData.isTeamEvent);
+      console.log('minTeamMembers:', formData.minTeamMembers);
+      console.log('maxTeamMembers:', formData.maxTeamMembers);
+
       const eventData = {
         title: formData.title.trim(),
         description: formData.description ? formData.description.trim() : null,
@@ -286,7 +293,12 @@ export default function EventManagementModal({
         maxTeamMembers: formData.acceptsIdeas ? null : (formData.isTeamEvent && formData.maxTeamMembers ? parseInt(formData.maxTeamMembers) : null)
       };
 
-      console.log('Sending event data:', eventData);
+      console.log('=== Sending Event Data ===');
+      console.log('Full payload:', eventData);
+      console.log('Team event fields in payload:');
+      console.log('  isTeamEvent:', eventData.isTeamEvent);
+      console.log('  minTeamMembers:', eventData.minTeamMembers);
+      console.log('  maxTeamMembers:', eventData.maxTeamMembers);
 
       let savedEvent;
       if (event) {
