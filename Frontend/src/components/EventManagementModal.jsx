@@ -96,7 +96,7 @@ export default function EventManagementModal({
         endDate: '',
         registrationDeadline: '',
         ideaSubmissionDeadline: '',
-        acceptsIdeas: true,
+        acceptsIdeas: false,
         location: '',
         maxParticipants: '',
         registrationFee: '0',
