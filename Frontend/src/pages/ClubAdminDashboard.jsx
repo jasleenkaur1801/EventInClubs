@@ -558,26 +558,52 @@ export default function ClubAdminDashboard() {
   const handleViewRegistrations = async (eventId) => {
     try {
       setRegistrationsEventId(eventId);
-      // Fetch registrations for this event
-      const response = await http.get(`/event-registrations/event/${eventId}`);
-      if (response.status === 200) {
-        const data = response.data;
-        setRegistrations(data);
-        // Sync the visible registrations count on the Active Events card immediately
-        setActiveEvents(prev => (prev || []).map(ev => ev.id === eventId ? { ...ev, currentParticipants: (data || []).length } : ev));
-        const storageKey = `attendance:event:${eventId}`;
-        const saved = localStorage.getItem(storageKey);
-        const initialMap = (data || []).reduce((acc, reg) => {
-          acc[reg.id] = reg.status === 'ATTENDED';
-          return acc;
-        }, {});
-        // Always use the current status from backend as the source of truth
-        setAttendanceMap(initialMap);
-        const ev = activeEvents.find(e => e.id === eventId);
-        setRegistrationsEventTitle(ev ? ev.title : 'Event Registrations');
-        setShowRegistrationsModal(true);
+      const ev = activeEvents.find(e => e.id === eventId);
+      
+      // Check if this is a team event
+      if (ev && ev.isTeamEvent) {
+        // Fetch team registrations
+        const response = await http.get(`/team-registrations/event/${eventId}`);
+        if (response.status === 200) {
+          const teamData = response.data;
+          // Transform team registrations to match the registration format
+          const transformedData = teamData.flatMap(team => 
+            team.memberRollNumbers.map((rollNo, index) => ({
+              id: `${team.id}-${index}`,
+              userName: index === 0 ? `${team.registeredByName} (Leader)` : `Team Member ${index}`,
+              userEmail: index === 0 ? team.registeredByEmail || 'N/A' : 'N/A',
+              rollNumber: rollNo,
+              status: team.status === 'REGISTERED' ? 'REGISTERED' : team.status,
+              registeredAt: team.registeredAt,
+              teamName: team.teamName
+            }))
+          );
+          setRegistrations(transformedData);
+          setAttendanceMap({});
+          setRegistrationsEventTitle(ev.title);
+          setShowRegistrationsModal(true);
+        }
       } else {
-        throw new Error('Failed to fetch registrations');
+        // Fetch individual registrations
+        const response = await http.get(`/event-registrations/event/${eventId}`);
+        if (response.status === 200) {
+          const data = response.data;
+          setRegistrations(data);
+          // Sync the visible registrations count on the Active Events card immediately
+          setActiveEvents(prev => (prev || []).map(ev => ev.id === eventId ? { ...ev, currentParticipants: (data || []).length } : ev));
+          const storageKey = `attendance:event:${eventId}`;
+          const saved = localStorage.getItem(storageKey);
+          const initialMap = (data || []).reduce((acc, reg) => {
+            acc[reg.id] = reg.status === 'ATTENDED';
+            return acc;
+          }, {});
+          // Always use the current status from backend as the source of truth
+          setAttendanceMap(initialMap);
+          setRegistrationsEventTitle(ev ? ev.title : 'Event Registrations');
+          setShowRegistrationsModal(true);
+        } else {
+          throw new Error('Failed to fetch registrations');
+        }
       }
     } catch (error) {
       console.error('Error fetching registrations:', error);

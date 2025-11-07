@@ -13,6 +13,9 @@ const ActiveEvents = () => {
     rollNumber: '',
     teamName: '',
     teamSize: '',
+    leaderName: '',
+    leaderEmail: '',
+    leaderRollNumber: '',
     memberRollNumbers: ['']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,15 +59,21 @@ const ActiveEvents = () => {
     console.log('minTeamMembers:', event.minTeamMembers);
     console.log('maxTeamMembers:', event.maxTeamMembers);
     
+    const user = JSON.parse(localStorage.getItem('user'));
     setSelectedEvent(event);
     setShowRegistrationModal(true);
     if (event.isTeamEvent) {
       console.log('Setting up TEAM registration form');
+      // Auto-fill team leader info from logged-in user
+      const additionalMembers = Math.max(0, (event.minTeamMembers || 1) - 1);
       setRegistrationData({ 
         notes: '', 
         teamName: '', 
         teamSize: event.minTeamMembers || '', 
-        memberRollNumbers: Array(event.minTeamMembers || 1).fill('')
+        leaderName: user?.name || '',
+        leaderEmail: user?.email || '',
+        leaderRollNumber: '',
+        memberRollNumbers: Array(additionalMembers).fill('')
       });
     } else {
       console.log('Setting up INDIVIDUAL registration form');
@@ -93,11 +102,20 @@ const ActiveEvents = () => {
           return;
         }
 
-        // Filter out empty roll numbers
-        const validRollNumbers = registrationData.memberRollNumbers.filter(rollNo => rollNo.trim());
+        if (!registrationData.leaderRollNumber || !registrationData.leaderRollNumber.trim()) {
+          alert('Please enter your roll number');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Filter out empty roll numbers from additional members
+        const additionalRollNumbers = registrationData.memberRollNumbers.filter(rollNo => rollNo.trim());
+        
+        // Combine leader roll number with additional members
+        const allRollNumbers = [registrationData.leaderRollNumber.trim(), ...additionalRollNumbers];
         
         // Validate team size
-        const actualTeamSize = validRollNumbers.length;
+        const actualTeamSize = allRollNumbers.length;
         if (actualTeamSize < selectedEvent.minTeamMembers) {
           alert(`Team must have at least ${selectedEvent.minTeamMembers} members. You have entered ${actualTeamSize} member(s).`);
           setIsSubmitting(false);
@@ -111,8 +129,8 @@ const ActiveEvents = () => {
         }
 
         // Check for duplicate roll numbers
-        const uniqueRollNumbers = new Set(validRollNumbers.map(r => r.trim().toLowerCase()));
-        if (uniqueRollNumbers.size !== validRollNumbers.length) {
+        const uniqueRollNumbers = new Set(allRollNumbers.map(r => r.trim().toLowerCase()));
+        if (uniqueRollNumbers.size !== allRollNumbers.length) {
           alert('Duplicate roll numbers detected. Each team member must have a unique roll number.');
           setIsSubmitting(false);
           return;
@@ -127,7 +145,7 @@ const ActiveEvents = () => {
         });
         
         // Add each member roll number as a separate parameter
-        validRollNumbers.forEach(rollNo => {
+        allRollNumbers.forEach(rollNo => {
           params.append('memberRollNumbers', rollNo.trim());
         });
         
@@ -414,46 +432,69 @@ const ActiveEvents = () => {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="teamSize">Number of Team Members *</label>
+                      <label>Team Leader (You)</label>
                       <input
-                        id="teamSize"
-                        type="number"
-                        min={selectedEvent.minTeamMembers}
-                        max={selectedEvent.maxTeamMembers}
-                        value={registrationData.teamSize}
-                        onChange={(e) => {
-                          const size = parseInt(e.target.value) || 0;
-                          setRegistrationData({
-                            ...registrationData,
-                            teamSize: e.target.value,
-                            memberRollNumbers: Array(size).fill('').map((_, i) => 
-                              registrationData.memberRollNumbers[i] || '')
-                          });
-                        }}
-                        placeholder={`Min: ${selectedEvent.minTeamMembers}, Max: ${selectedEvent.maxTeamMembers}`}
-                        required
+                        type="text"
+                        value={registrationData.leaderName}
+                        disabled
+                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                       />
-                      <small>Team size must be between {selectedEvent.minTeamMembers} and {selectedEvent.maxTeamMembers} members</small>
+                      <input
+                        type="email"
+                        value={registrationData.leaderEmail}
+                        disabled
+                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed', marginTop: '8px' }}
+                      />
+                      <input
+                        type="text"
+                        value={registrationData.leaderRollNumber}
+                        onChange={(e) => setRegistrationData({...registrationData, leaderRollNumber: e.target.value})}
+                        placeholder="Your roll number *"
+                        required
+                        style={{ marginTop: '8px' }}
+                      />
                     </div>
 
                     <div className="form-group">
-                      <label>Team Member Roll Numbers *</label>
-                      {registrationData.memberRollNumbers.map((rollNo, index) => (
-                        <input
-                          key={index}
-                          type="text"
-                          value={rollNo}
-                          onChange={(e) => {
-                            const newRollNumbers = [...registrationData.memberRollNumbers];
-                            newRollNumbers[index] = e.target.value;
-                            setRegistrationData({...registrationData, memberRollNumbers: newRollNumbers});
-                          }}
-                          placeholder={`Member ${index + 1} roll number`}
-                          required
-                          style={{ marginBottom: '8px' }}
-                        />
-                      ))}
+                      <label htmlFor="teamSize">Number of Additional Team Members</label>
+                      <input
+                        id="teamSize"
+                        type="number"
+                        min={Math.max(0, selectedEvent.minTeamMembers - 1)}
+                        max={selectedEvent.maxTeamMembers - 1}
+                        value={registrationData.memberRollNumbers.length}
+                        onChange={(e) => {
+                          const additionalSize = parseInt(e.target.value) || 0;
+                          setRegistrationData({
+                            ...registrationData,
+                            memberRollNumbers: Array(additionalSize).fill('').map((_, i) => 
+                              registrationData.memberRollNumbers[i] || '')
+                          });
+                        }}
+                        placeholder={`0 to ${selectedEvent.maxTeamMembers - 1}`}
+                      />
+                      <small>Total team size: {1 + registrationData.memberRollNumbers.length} (including you). Min: {selectedEvent.minTeamMembers}, Max: {selectedEvent.maxTeamMembers}</small>
                     </div>
+
+                    {registrationData.memberRollNumbers.length > 0 && (
+                      <div className="form-group">
+                        <label>Additional Team Members' Roll Numbers</label>
+                        {registrationData.memberRollNumbers.map((rollNo, index) => (
+                          <input
+                            key={index}
+                            type="text"
+                            value={rollNo}
+                            onChange={(e) => {
+                              const newRollNumbers = [...registrationData.memberRollNumbers];
+                              newRollNumbers[index] = e.target.value;
+                              setRegistrationData({...registrationData, memberRollNumbers: newRollNumbers});
+                            }}
+                            placeholder={`Member ${index + 2} roll number`}
+                            style={{ marginBottom: '8px' }}
+                          />
+                        ))}
+                      </div>
+                    )}
 
                     <div className="form-group">
                       <label htmlFor="notes">Additional Notes (Optional)</label>
