@@ -29,6 +29,18 @@ const ActiveEvents = () => {
       const response = await http.get('/events/active');
       const activeEvents = response.data;
       
+      console.log('=== Fetched Active Events ===');
+      console.log('Total events:', activeEvents.length);
+      activeEvents.forEach((event, index) => {
+        console.log(`Event ${index + 1}:`, {
+          id: event.id,
+          title: event.title,
+          isTeamEvent: event.isTeamEvent,
+          minTeamMembers: event.minTeamMembers,
+          maxTeamMembers: event.maxTeamMembers
+        });
+      });
+      
       setEvents(activeEvents);
     } catch (error) {
       console.error('Error fetching active events:', error);
@@ -38,9 +50,16 @@ const ActiveEvents = () => {
   };
 
   const handleRegisterClick = (event) => {
+    console.log('=== Registration Modal Opened ===');
+    console.log('Event data:', event);
+    console.log('isTeamEvent:', event.isTeamEvent);
+    console.log('minTeamMembers:', event.minTeamMembers);
+    console.log('maxTeamMembers:', event.maxTeamMembers);
+    
     setSelectedEvent(event);
     setShowRegistrationModal(true);
     if (event.isTeamEvent) {
+      console.log('Setting up TEAM registration form');
       setRegistrationData({ 
         notes: '', 
         teamName: '', 
@@ -48,6 +67,7 @@ const ActiveEvents = () => {
         memberRollNumbers: Array(event.minTeamMembers || 1).fill('')
       });
     } else {
+      console.log('Setting up INDIVIDUAL registration form');
       setRegistrationData({ notes: '', rollNumber: '' });
     }
   };
@@ -231,6 +251,11 @@ const ActiveEvents = () => {
                     <span className={`event-fee ${event.registrationFee === 0 ? 'free' : 'paid'}`}>
                       {event.registrationFee === 0 ? 'FREE' : `₹${event.registrationFee}`}
                     </span>
+                    {event.isTeamEvent && (
+                      <span className="event-team-badge">
+                        👥 TEAM EVENT
+                      </span>
+                    )}
                   </div>
                 </div>
 
