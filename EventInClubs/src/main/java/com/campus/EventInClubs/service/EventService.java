@@ -180,6 +180,9 @@ public class EventService {
                 .approvalStatus(approvalStatus)
                 .approvedBy(isDirectEvent ? organizer : null)
                 .approvalDate(isDirectEvent ? LocalDateTime.now() : null)
+                .isTeamEvent(eventDto.getIsTeamEvent() != null ? eventDto.getIsTeamEvent() : false)
+                .minTeamMembers(eventDto.getMinTeamMembers())
+                .maxTeamMembers(eventDto.getMaxTeamMembers())
                 .build();
         
         Event savedEvent = eventRepository.save(event);
@@ -232,6 +235,13 @@ public class EventService {
             event.setIsActive(eventDto.getIsActive());
         }
         // If isActive is null in DTO, keep the existing value (don't change it)
+        
+        // Update team event fields
+        if (eventDto.getIsTeamEvent() != null) {
+            event.setIsTeamEvent(eventDto.getIsTeamEvent());
+        }
+        event.setMinTeamMembers(eventDto.getMinTeamMembers());
+        event.setMaxTeamMembers(eventDto.getMaxTeamMembers());
         
         // Update hall if hallId is provided
         if (eventDto.getHallId() != null) {
