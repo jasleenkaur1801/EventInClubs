@@ -11,6 +11,7 @@ import com.campus.EventInClubs.repository.EventRepository;
 import com.campus.EventInClubs.repository.EventRegistrationRepository;
 import com.campus.EventInClubs.repository.HallRepository;
 import com.campus.EventInClubs.repository.IdeaRepository;
+import com.campus.EventInClubs.repository.TeamRegistrationRepository;
 import com.campus.EventInClubs.repository.UserRepository;
 import com.campus.EventInClubs.repository.VoteRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class EventService {
     private final NotificationService notificationService;
     private final EventCleanupService eventCleanupService;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final TeamRegistrationRepository teamRegistrationRepository;
     private final ClubRepository clubRepository;
     private final UserRepository userRepository;
     private final HallRepository hallRepository;
@@ -431,9 +433,15 @@ public class EventService {
     
     // Lightweight converter for list views - doesn't query ideas/votes to avoid N+1
     private EventDto convertToDtoLightweight(Event event) {
-        // Get actual registration count
-        Long registrationCount = eventRegistrationRepository.countActiveByEventId(event.getId());
-        int currentParticipants = registrationCount != null ? registrationCount.intValue() : 0;
+        // Get actual registration count - for team events, count team members, not teams
+        int currentParticipants = 0;
+        if (event.getIsTeamEvent() != null && event.getIsTeamEvent()) {
+            Long teamMembersCount = teamRegistrationRepository.sumTeamMembersByEventId(event.getId());
+            currentParticipants = teamMembersCount != null ? teamMembersCount.intValue() : 0;
+        } else {
+            Long registrationCount = eventRegistrationRepository.countActiveByEventId(event.getId());
+            currentParticipants = registrationCount != null ? registrationCount.intValue() : 0;
+        }
         
         return EventDto.builder()
                 .id(event.getId())
@@ -497,9 +505,15 @@ public class EventService {
         
         log.debug("Event {} has {} ideas with {} total votes", event.getId(), eventIdeas.size(), totalVotes);
         
-        // Get actual registration count
-        Long registrationCount = eventRegistrationRepository.countActiveByEventId(event.getId());
-        int currentParticipants = registrationCount != null ? registrationCount.intValue() : 0;
+        // Get actual registration count - for team events, count team members, not teams
+        int currentParticipants = 0;
+        if (event.getIsTeamEvent() != null && event.getIsTeamEvent()) {
+            Long teamMembersCount = teamRegistrationRepository.sumTeamMembersByEventId(event.getId());
+            currentParticipants = teamMembersCount != null ? teamMembersCount.intValue() : 0;
+        } else {
+            Long registrationCount = eventRegistrationRepository.countActiveByEventId(event.getId());
+            currentParticipants = registrationCount != null ? registrationCount.intValue() : 0;
+        }
         
         return EventDto.builder()
                 .id(event.getId())

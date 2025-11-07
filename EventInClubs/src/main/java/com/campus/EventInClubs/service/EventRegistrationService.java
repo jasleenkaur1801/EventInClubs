@@ -6,6 +6,7 @@ import com.campus.EventInClubs.domain.model.User;
 import com.campus.EventInClubs.dto.EventRegistrationDto;
 import com.campus.EventInClubs.repository.EventRegistrationRepository;
 import com.campus.EventInClubs.repository.EventRepository;
+import com.campus.EventInClubs.repository.TeamRegistrationRepository;
 import com.campus.EventInClubs.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class EventRegistrationService {
     private final EventRegistrationRepository registrationRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final TeamRegistrationRepository teamRegistrationRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
     
@@ -126,7 +128,16 @@ public class EventRegistrationService {
     }
     
     public Long getRegistrationCount(Long eventId) {
-        return registrationRepository.countActiveByEventId(eventId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // For team events, count total team members, not just teams
+        if (event.getIsTeamEvent() != null && event.getIsTeamEvent()) {
+            Long teamMembersCount = teamRegistrationRepository.sumTeamMembersByEventId(eventId);
+            return teamMembersCount != null ? teamMembersCount : 0L;
+        } else {
+            return registrationRepository.countActiveByEventId(eventId);
+        }
     }
     
     public EventRegistrationDto updateRegistrationStatus(Long registrationId, EventRegistration.RegistrationStatus newStatus) {
