@@ -101,6 +101,17 @@ public class Event {
     @Builder.Default
     private Boolean isActive = true;
     
+    // Team event fields
+    @Column(name = "is_team_event")
+    @Builder.Default
+    private Boolean isTeamEvent = false;
+    
+    @Column(name = "min_team_members")
+    private Integer minTeamMembers;
+    
+    @Column(name = "max_team_members")
+    private Integer maxTeamMembers;
+    
     // Approval workflow fields
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status")

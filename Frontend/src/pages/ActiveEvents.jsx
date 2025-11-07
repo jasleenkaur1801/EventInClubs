@@ -10,7 +10,10 @@ const ActiveEvents = () => {
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     notes: '',
-    rollNumber: ''
+    rollNumber: '',
+    teamName: '',
+    teamSize: '',
+    memberRollNumbers: ['']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -37,7 +40,16 @@ const ActiveEvents = () => {
   const handleRegisterClick = (event) => {
     setSelectedEvent(event);
     setShowRegistrationModal(true);
-    setRegistrationData({ notes: '', rollNumber: '' });
+    if (event.isTeamEvent) {
+      setRegistrationData({ 
+        notes: '', 
+        teamName: '', 
+        teamSize: event.minTeamMembers || '', 
+        memberRollNumbers: Array(event.minTeamMembers || 1).fill('')
+      });
+    } else {
+      setRegistrationData({ notes: '', rollNumber: '' });
+    }
   };
 
   const handleRegistrationSubmit = async (e) => {
@@ -51,14 +63,35 @@ const ActiveEvents = () => {
         return;
       }
 
-      const params = new URLSearchParams({
-        eventId: selectedEvent.id,
-        userId: user.id,
-        rollNumber: registrationData.rollNumber,
-        notes: registrationData.notes
-      });
-      
-      const response = await http.post(`/event-registrations/register?${params.toString()}`);
+      let response;
+      if (selectedEvent.isTeamEvent) {
+        // Team registration
+        const params = new URLSearchParams({
+          eventId: selectedEvent.id,
+          userId: user.id,
+          teamName: registrationData.teamName,
+          notes: registrationData.notes || ''
+        });
+        
+        // Add each member roll number as a separate parameter
+        registrationData.memberRollNumbers.forEach(rollNo => {
+          if (rollNo.trim()) {
+            params.append('memberRollNumbers', rollNo.trim());
+          }
+        });
+        
+        response = await http.post(`/team-registrations/register?${params.toString()}`);
+      } else {
+        // Individual registration
+        const params = new URLSearchParams({
+          eventId: selectedEvent.id,
+          userId: user.id,
+          rollNumber: registrationData.rollNumber,
+          notes: registrationData.notes
+        });
+        
+        response = await http.post(`/event-registrations/register?${params.toString()}`);
+      }
 
       if (response.status === 200) {
         const result = response.data;
@@ -71,7 +104,8 @@ const ActiveEvents = () => {
       }
     } catch (error) {
       console.error('Error registering for event:', error);
-      alert('Registration failed. Please try again.');
+      const errorMsg = error.response?.data?.error || 'Registration failed. Please try again.';
+      alert(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -298,28 +332,101 @@ const ActiveEvents = () => {
               </div>
 
               <form onSubmit={handleRegistrationSubmit}>
-                <div className="form-group">
-                  <label htmlFor="rollNumber">Roll Number *</label>
-                  <input
-                    id="rollNumber"
-                    type="text"
-                    value={registrationData.rollNumber}
-                    onChange={(e) => setRegistrationData({...registrationData, rollNumber: e.target.value})}
-                    placeholder="Enter your roll number"
-                    required
-                  />
-                </div>
+                {selectedEvent?.isTeamEvent ? (
+                  // Team registration form
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="teamName">Team Name *</label>
+                      <input
+                        id="teamName"
+                        type="text"
+                        value={registrationData.teamName}
+                        onChange={(e) => setRegistrationData({...registrationData, teamName: e.target.value})}
+                        placeholder="Enter your team name"
+                        required
+                      />
+                    </div>
 
-                <div className="form-group">
-                  <label htmlFor="notes">Additional Notes (Optional)</label>
-                  <textarea
-                    id="notes"
-                    value={registrationData.notes}
-                    onChange={(e) => setRegistrationData({...registrationData, notes: e.target.value})}
-                    placeholder="Any special requirements, dietary restrictions, or questions..."
-                    rows="4"
-                  />
-                </div>
+                    <div className="form-group">
+                      <label htmlFor="teamSize">Number of Team Members *</label>
+                      <input
+                        id="teamSize"
+                        type="number"
+                        min={selectedEvent.minTeamMembers}
+                        max={selectedEvent.maxTeamMembers}
+                        value={registrationData.teamSize}
+                        onChange={(e) => {
+                          const size = parseInt(e.target.value) || 0;
+                          setRegistrationData({
+                            ...registrationData,
+                            teamSize: e.target.value,
+                            memberRollNumbers: Array(size).fill('').map((_, i) => 
+                              registrationData.memberRollNumbers[i] || '')
+                          });
+                        }}
+                        placeholder={`Min: ${selectedEvent.minTeamMembers}, Max: ${selectedEvent.maxTeamMembers}`}
+                        required
+                      />
+                      <small>Team size must be between {selectedEvent.minTeamMembers} and {selectedEvent.maxTeamMembers} members</small>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Team Member Roll Numbers *</label>
+                      {registrationData.memberRollNumbers.map((rollNo, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          value={rollNo}
+                          onChange={(e) => {
+                            const newRollNumbers = [...registrationData.memberRollNumbers];
+                            newRollNumbers[index] = e.target.value;
+                            setRegistrationData({...registrationData, memberRollNumbers: newRollNumbers});
+                          }}
+                          placeholder={`Member ${index + 1} roll number`}
+                          required
+                          style={{ marginBottom: '8px' }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="notes">Additional Notes (Optional)</label>
+                      <textarea
+                        id="notes"
+                        value={registrationData.notes}
+                        onChange={(e) => setRegistrationData({...registrationData, notes: e.target.value})}
+                        placeholder="Any special requirements or questions..."
+                        rows="3"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  // Individual registration form
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="rollNumber">Roll Number *</label>
+                      <input
+                        id="rollNumber"
+                        type="text"
+                        value={registrationData.rollNumber}
+                        onChange={(e) => setRegistrationData({...registrationData, rollNumber: e.target.value})}
+                        placeholder="Enter your roll number"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="notes">Additional Notes (Optional)</label>
+                      <textarea
+                        id="notes"
+                        value={registrationData.notes}
+                        onChange={(e) => setRegistrationData({...registrationData, notes: e.target.value})}
+                        placeholder="Any special requirements, dietary restrictions, or questions..."
+                        rows="4"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="modal-actions">
                   <button 

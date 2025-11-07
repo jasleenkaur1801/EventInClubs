@@ -462,6 +462,9 @@ public class EventService {
                 .approvedByName(event.getApprovedBy() != null ? event.getApprovedBy().getName() : null)
                 .approvalDate(event.getApprovalDate())
                 .submittedForApprovalDate(event.getSubmittedForApprovalDate())
+                .isTeamEvent(event.getIsTeamEvent())
+                .minTeamMembers(event.getMinTeamMembers())
+                .maxTeamMembers(event.getMaxTeamMembers())
                 .build();
     }
     
@@ -525,6 +528,9 @@ public class EventService {
             .approvedByName(event.getApprovedBy() != null ? event.getApprovedBy().getName() : null)
             .approvalDate(event.getApprovalDate())
             .submittedForApprovalDate(event.getSubmittedForApprovalDate())
+            .isTeamEvent(event.getIsTeamEvent())
+            .minTeamMembers(event.getMinTeamMembers())
+            .maxTeamMembers(event.getMaxTeamMembers())
             .build();
     }
     

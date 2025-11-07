@@ -65,6 +65,11 @@ public class EventDto {
     // Proposal information
     private Long proposalId;
     
+    // Team event information
+    private Boolean isTeamEvent;
+    private Integer minTeamMembers;
+    private Integer maxTeamMembers;
+    
     // Helper method to check if registration is open
     public boolean isRegistrationOpen() {
         return status == Event.EventStatus.PUBLISHED && 

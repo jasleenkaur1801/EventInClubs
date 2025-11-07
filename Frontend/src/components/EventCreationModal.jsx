@@ -13,7 +13,10 @@ const EventCreationModal = ({ onClose, onSubmit, clubId, initialData = null, isR
     endTime: '',
     maxParticipants: '',
     registrationFee: 0,
-    selectedHall: ''
+    selectedHall: '',
+    isTeamEvent: false,
+    minTeamMembers: '',
+    maxTeamMembers: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -29,10 +32,10 @@ const EventCreationModal = ({ onClose, onSubmit, clubId, initialData = null, isR
   ];
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
 
     // Clear specific error when user starts typing
@@ -184,6 +187,26 @@ const EventCreationModal = ({ onClose, onSubmit, clubId, initialData = null, isR
 
     if (!formData.selectedHall) {
       newErrors.selectedHall = 'Please select a hall for the event';
+    }
+
+    // Validate team event fields
+    if (formData.isTeamEvent) {
+      if (!formData.minTeamMembers) {
+        newErrors.minTeamMembers = 'Minimum team members is required for team events';
+      } else if (isNaN(formData.minTeamMembers) || formData.minTeamMembers < 1) {
+        newErrors.minTeamMembers = 'Minimum team members must be at least 1';
+      }
+
+      if (!formData.maxTeamMembers) {
+        newErrors.maxTeamMembers = 'Maximum team members is required for team events';
+      } else if (isNaN(formData.maxTeamMembers) || formData.maxTeamMembers < 1) {
+        newErrors.maxTeamMembers = 'Maximum team members must be at least 1';
+      }
+
+      if (formData.minTeamMembers && formData.maxTeamMembers && 
+          parseInt(formData.minTeamMembers) > parseInt(formData.maxTeamMembers)) {
+        newErrors.maxTeamMembers = 'Maximum team members must be greater than or equal to minimum';
+      }
     }
 
     setErrors(newErrors);
@@ -349,25 +372,70 @@ const EventCreationModal = ({ onClose, onSubmit, clubId, initialData = null, isR
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="registrationFee">Registration Fee (₹)</label>
-              <input
-                type="number"
-                id="registrationFee"
-                name="registrationFee"
-                value={formData.registrationFee}
-                onChange={handleInputChange}
-                className={errors.registrationFee ? 'error' : ''}
-                placeholder="0"
-                min="0"
-                step="0.01"
-              />
-              {errors.registrationFee && <span className="error-text">{errors.registrationFee}</span>}
-            </div>
+          <div className="form-group">
+            <label htmlFor="registrationFee">Registration Fee (₹)</label>
+            <input
+              type="number"
+              id="registrationFee"
+              name="registrationFee"
+              value={formData.registrationFee}
+              onChange={handleInputChange}
+              className={errors.registrationFee ? 'error' : ''}
+              placeholder="0"
+              min="0"
+              step="0.01"
+            />
+            {errors.registrationFee && <span className="error-text">{errors.registrationFee}</span>}
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="selectedHall">Hall Selection *</label>
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="isTeamEvent"
+                checked={formData.isTeamEvent}
+                onChange={handleInputChange}
+              />
+              <span>This is a team event</span>
+            </label>
+          </div>
+
+          {formData.isTeamEvent && (
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="minTeamMembers">Minimum Team Members *</label>
+                <input
+                  type="number"
+                  id="minTeamMembers"
+                  name="minTeamMembers"
+                  value={formData.minTeamMembers}
+                  onChange={handleInputChange}
+                  className={errors.minTeamMembers ? 'error' : ''}
+                  placeholder="Minimum team size"
+                  min="1"
+                />
+                {errors.minTeamMembers && <span className="error-text">{errors.minTeamMembers}</span>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="maxTeamMembers">Maximum Team Members *</label>
+                <input
+                  type="number"
+                  id="maxTeamMembers"
+                  name="maxTeamMembers"
+                  value={formData.maxTeamMembers}
+                  onChange={handleInputChange}
+                  className={errors.maxTeamMembers ? 'error' : ''}
+                  placeholder="Maximum team size"
+                  min="1"
+                />
+                {errors.maxTeamMembers && <span className="error-text">{errors.maxTeamMembers}</span>}
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="selectedHall">Hall Selection *</label>
               <select
                 id="selectedHall"
                 name="selectedHall"
@@ -393,7 +461,6 @@ const EventCreationModal = ({ onClose, onSubmit, clubId, initialData = null, isR
                   {hallsMessage}
                 </small>
               )}
-            </div>
           </div>
 
           {errors.submit && <div className="error-text">{errors.submit}</div>}
