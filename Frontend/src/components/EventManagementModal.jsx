@@ -27,7 +27,10 @@ export default function EventManagementModal({
     imageUrl: '',
     externalLink: '',
     status: 'DRAFT',
-    hallId: ''
+    hallId: '',
+    isTeamEvent: false,
+    minTeamMembers: '',
+    maxTeamMembers: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -79,7 +82,10 @@ export default function EventManagementModal({
         imageUrl: event.imageUrl || '',
         externalLink: event.externalLink || '',
         status: event.status || 'DRAFT',
-        hallId: event.hallId?.toString() || ''
+        hallId: event.hallId?.toString() || '',
+        isTeamEvent: event.isTeamEvent || false,
+        minTeamMembers: event.minTeamMembers?.toString() || '',
+        maxTeamMembers: event.maxTeamMembers?.toString() || ''
       });
     } else {
       // Reset form for new event
@@ -98,6 +104,9 @@ export default function EventManagementModal({
         clubId: clubs.length > 0 ? clubs[0].id.toString() : '',
         tags: '',
         imageUrl: '',
+        isTeamEvent: false,
+        minTeamMembers: '',
+        maxTeamMembers: '',
         externalLink: '',
         status: 'DRAFT',
         hallId: ''
@@ -202,6 +211,26 @@ export default function EventManagementModal({
       if (!formData.hallId) {
         newErrors.hallId = 'Hall selection is required';
       }
+      
+      // Validate team event fields
+      if (formData.isTeamEvent) {
+        if (!formData.minTeamMembers) {
+          newErrors.minTeamMembers = 'Minimum team members is required for team events';
+        } else if (isNaN(formData.minTeamMembers) || formData.minTeamMembers < 1) {
+          newErrors.minTeamMembers = 'Minimum team members must be at least 1';
+        }
+
+        if (!formData.maxTeamMembers) {
+          newErrors.maxTeamMembers = 'Maximum team members is required for team events';
+        } else if (isNaN(formData.maxTeamMembers) || formData.maxTeamMembers < 1) {
+          newErrors.maxTeamMembers = 'Maximum team members must be at least 1';
+        }
+
+        if (formData.minTeamMembers && formData.maxTeamMembers && 
+            parseInt(formData.minTeamMembers) > parseInt(formData.maxTeamMembers)) {
+          newErrors.maxTeamMembers = 'Maximum team members must be greater than or equal to minimum';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -250,7 +279,11 @@ export default function EventManagementModal({
         imageUrl: imageUrl,
         hallId: formData.acceptsIdeas ? null : (formData.hallId ? parseInt(formData.hallId) : null),
         // Explicitly set isActive to true to ensure event remains visible
-        isActive: true
+        isActive: true,
+        // Team event fields (only for direct events)
+        isTeamEvent: formData.acceptsIdeas ? false : formData.isTeamEvent,
+        minTeamMembers: formData.acceptsIdeas ? null : (formData.isTeamEvent && formData.minTeamMembers ? parseInt(formData.minTeamMembers) : null),
+        maxTeamMembers: formData.acceptsIdeas ? null : (formData.isTeamEvent && formData.maxTeamMembers ? parseInt(formData.maxTeamMembers) : null)
       };
 
       console.log('Sending event data:', eventData);
@@ -591,6 +624,52 @@ export default function EventManagementModal({
                   />
                   <small className="help-text">Additional location details if needed</small>
                 </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="isTeamEvent"
+                      checked={formData.isTeamEvent}
+                      onChange={handleInputChange}
+                    />
+                    <span>This is a team event</span>
+                  </label>
+                </div>
+
+                {formData.isTeamEvent && (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="minTeamMembers">Minimum Team Members *</label>
+                      <input
+                        type="number"
+                        id="minTeamMembers"
+                        name="minTeamMembers"
+                        value={formData.minTeamMembers}
+                        onChange={handleInputChange}
+                        className={errors.minTeamMembers ? 'error' : ''}
+                        placeholder="Minimum team size"
+                        min="1"
+                      />
+                      {errors.minTeamMembers && <span className="error-text">{errors.minTeamMembers}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="maxTeamMembers">Maximum Team Members *</label>
+                      <input
+                        type="number"
+                        id="maxTeamMembers"
+                        name="maxTeamMembers"
+                        value={formData.maxTeamMembers}
+                        onChange={handleInputChange}
+                        className={errors.maxTeamMembers ? 'error' : ''}
+                        placeholder="Maximum team size"
+                        min="1"
+                      />
+                      {errors.maxTeamMembers && <span className="error-text">{errors.maxTeamMembers}</span>}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
