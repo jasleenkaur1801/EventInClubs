@@ -620,46 +620,20 @@ export default function ClubAdminDashboard() {
     
     console.log(`Toggling attendance for registration ${registrationId}: ${currentStatus} -> ${newPresentStatus} (${newStatus})`);
     
-    try {
-      // Update backend immediately
-      const response = await http.put(`/event-registrations/${registrationId}/status?status=${newStatus}`);
-      
-      if (response.status === 200) {
-        // Update local state
-        setAttendanceMap(prev => {
-          const updated = { ...prev, [registrationId]: newPresentStatus };
-          if (registrationsEventId) {
-            localStorage.setItem(`attendance:event:${registrationsEventId}`, JSON.stringify(updated));
-          }
-          return updated;
-        });
-        
-        // Update the registrations list to reflect the new status
-        const updatedRegistrations = registrations.map(reg => 
-          reg.id === registrationId ? { ...reg, status: newStatus } : reg
-        );
-        setRegistrations(updatedRegistrations);
-        
-        // Update the active events count immediately - count REGISTERED, ATTENDED, and NO_SHOW (exclude CANCELLED/WITHDRAWN)
-        setActiveEvents(prev => (prev || []).map(ev => {
-          if (ev.id === registrationsEventId) {
-            // Count current registrations with REGISTERED, ATTENDED, or NO_SHOW status
-            const currentCount = updatedRegistrations.filter(reg => 
-              reg.status === 'REGISTERED' || reg.status === 'ATTENDED' || reg.status === 'NO_SHOW'
-            ).length;
-            console.log(`Updated count for event ${ev.id}: ${currentCount} (REGISTERED + ATTENDED + NO_SHOW)`);
-            return { ...ev, currentParticipants: currentCount };
-          }
-          return ev;
-        }));
-      } else {
-        console.error('Failed to update registration status');
-        alert('Failed to update attendance. Please try again.');
+    // Update local state immediately for better UX
+    setAttendanceMap(prev => {
+      const updated = { ...prev, [registrationId]: newPresentStatus };
+      if (registrationsEventId) {
+        localStorage.setItem(`attendance:event:${registrationsEventId}`, JSON.stringify(updated));
       }
-    } catch (error) {
-      console.error('Error updating attendance:', error);
-      alert('Failed to update attendance. Please try again.');
-    }
+      return updated;
+    });
+    
+    // Update the registrations list to reflect the new status
+    const updatedRegistrations = registrations.map(reg => 
+      reg.id === registrationId ? { ...reg, status: newStatus } : reg
+    );
+    setRegistrations(updatedRegistrations);
   };
 
   const handleSaveAttendance = async () => {
@@ -667,17 +641,32 @@ export default function ClubAdminDashboard() {
       setSavingAttendance(true);
       
       // Build CSV and trigger download on device
-      const headers = ['Name','Email','Roll','Present','Status','Registered At'];
+      const ev = activeEvents.find(e => e.id === registrationsEventId);
+      const isTeamEvent = ev?.isTeamEvent;
+      
+      const headers = isTeamEvent 
+        ? ['Name','Email','Roll','Team Name','Status','Registered At']
+        : ['Name','Email','Roll','Present','Status','Registered At'];
+      
       const rows = registrations.map(reg => {
         const present = attendanceMap[reg.id] === true;
-        return [
-          reg.userName || '',
-          reg.userEmail || '',
-          reg.rollNumber || '',
-          present ? 'Yes' : 'No',
-          present ? 'ATTENDED' : 'NO_SHOW',
-          reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
-        ];
+        return isTeamEvent 
+          ? [
+              reg.userName || '',
+              reg.userEmail || '',
+              reg.rollNumber || '',
+              reg.teamName || '',
+              reg.status || 'REGISTERED',
+              reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
+            ]
+          : [
+              reg.userName || '',
+              reg.userEmail || '',
+              reg.rollNumber || '',
+              present ? 'Yes' : 'No',
+              present ? 'ATTENDED' : 'NO_SHOW',
+              reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
+            ];
       });
       const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell).replaceAll('"','""')}"`).join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1802,6 +1791,18 @@ export default function ClubAdminDashboard() {
                           color: '#333',
                           borderBottom: '2px solid #e0e0e0'
                         }}>Roll Number</th>
+                        {(() => {
+                          const ev = activeEvents.find(e => e.id === registrationsEventId);
+                          return ev?.isTeamEvent && (
+                            <th style={{
+                              textAlign: 'left',
+                              padding: '16px',
+                              fontWeight: '600',
+                              color: '#333',
+                              borderBottom: '2px solid #e0e0e0'
+                            }}>Team Name</th>
+                          );
+                        })()}
                         <th style={{
                           textAlign: 'left',
                           padding: '16px',
@@ -1852,6 +1853,14 @@ export default function ClubAdminDashboard() {
                           <td style={{ padding: '16px', color: '#666' }}>
                             {reg.rollNumber || '-'}
                           </td>
+                          {(() => {
+                            const ev = activeEvents.find(e => e.id === registrationsEventId);
+                            return ev?.isTeamEvent && (
+                              <td style={{ padding: '16px', color: '#7c3aed', fontWeight: '500' }}>
+                                {reg.teamName || '-'}
+                              </td>
+                            );
+                          })()}
                           <td style={{ padding: '16px' }}>
                             <span style={{
                               padding: '4px 12px',
