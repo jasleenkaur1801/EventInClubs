@@ -38,6 +38,11 @@ public class TeamRegistrationService {
             throw new RuntimeException("This event is not a team event");
         }
         
+        // Check if user has already registered a team for this event
+        if (teamRegistrationRepository.existsByEventIdAndRegisteredById(eventId, userId)) {
+            throw new RuntimeException("You have already registered a team for this event");
+        }
+        
         // Validate team size
         int teamSize = memberRollNumbers.size();
         if (event.getMinTeamMembers() != null && teamSize < event.getMinTeamMembers()) {

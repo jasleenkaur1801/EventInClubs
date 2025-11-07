@@ -679,49 +679,9 @@ export default function ClubAdminDashboard() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Clear local overrides for this event and refetch fresh statuses
-      if (registrationsEventId) {
-        localStorage.removeItem(`attendance:event:${registrationsEventId}`);
-        // Reload registrations to get updated statuses and refresh the modal
-        const ev = activeEvents.find(e => e.id === registrationsEventId);
-        
-        if (ev && ev.isTeamEvent) {
-          // Fetch team registrations
-          const response = await http.get(`/team-registrations/event/${registrationsEventId}`);
-          if (response.status === 200) {
-            const teamData = response.data;
-            // Transform team registrations to match the registration format
-            const transformedData = teamData.flatMap(team => 
-              team.memberRollNumbers.map((rollNo, index) => ({
-                id: `${team.id}-${index}`,
-                userName: team.memberNames && team.memberNames[index] ? team.memberNames[index] : 
-                          (index === 0 ? `${team.registeredByName} (Leader)` : `Team Member ${index + 1}`),
-                userEmail: team.memberEmails && team.memberEmails[index] ? team.memberEmails[index] :
-                           (index === 0 ? team.registeredByEmail || 'N/A' : 'N/A'),
-                rollNumber: rollNo,
-                status: team.status === 'REGISTERED' ? 'REGISTERED' : team.status,
-                registeredAt: team.registeredAt,
-                teamName: team.teamName
-              }))
-            );
-            setRegistrations(transformedData);
-            setAttendanceMap({});
-          }
-        } else {
-          // Fetch individual registrations
-          const response = await http.get(`/event-registrations/event/${registrationsEventId}`);
-          if (response.status === 200) {
-            const data = response.data;
-            setRegistrations(data);
-            // Update attendance map with fresh status from backend
-            const freshMap = (data || []).reduce((acc, reg) => {
-              acc[reg.id] = reg.status === 'ATTENDED';
-              return acc;
-            }, {});
-            setAttendanceMap(freshMap);
-          }
-        }
-      }
+      // Keep the attendance data after CSV download - don't refetch
+      // The attendance is already reflected in the current state
+      
       alert('Attendance downloaded successfully');
     } catch (e) {
       console.error('Error saving attendance', e);

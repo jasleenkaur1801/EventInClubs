@@ -24,4 +24,7 @@ public interface TeamRegistrationRepository extends JpaRepository<TeamRegistrati
     // Sum total team members for an event (only REGISTERED teams)
     @Query("SELECT COALESCE(SUM(tr.teamSize), 0) FROM TeamRegistration tr WHERE tr.event.id = :eventId AND tr.status = 'REGISTERED'")
     Long sumTeamMembersByEventId(@Param("eventId") Long eventId);
+    
+    // Check if user has already registered a team for this event
+    boolean existsByEventIdAndRegisteredById(Long eventId, Long userId);
 }
