@@ -80,34 +80,72 @@ const ActiveEvents = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user) {
         alert('Please log in to register for events');
+        setIsSubmitting(false);
         return;
       }
 
       let response;
       if (selectedEvent.isTeamEvent) {
+        // Validate team registration
+        if (!registrationData.teamName || !registrationData.teamName.trim()) {
+          alert('Please enter a team name');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Filter out empty roll numbers
+        const validRollNumbers = registrationData.memberRollNumbers.filter(rollNo => rollNo.trim());
+        
+        // Validate team size
+        const actualTeamSize = validRollNumbers.length;
+        if (actualTeamSize < selectedEvent.minTeamMembers) {
+          alert(`Team must have at least ${selectedEvent.minTeamMembers} members. You have entered ${actualTeamSize} member(s).`);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (actualTeamSize > selectedEvent.maxTeamMembers) {
+          alert(`Team cannot exceed ${selectedEvent.maxTeamMembers} members. You have entered ${actualTeamSize} member(s).`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Check for duplicate roll numbers
+        const uniqueRollNumbers = new Set(validRollNumbers.map(r => r.trim().toLowerCase()));
+        if (uniqueRollNumbers.size !== validRollNumbers.length) {
+          alert('Duplicate roll numbers detected. Each team member must have a unique roll number.');
+          setIsSubmitting(false);
+          return;
+        }
+
         // Team registration
         const params = new URLSearchParams({
           eventId: selectedEvent.id,
           userId: user.id,
-          teamName: registrationData.teamName,
+          teamName: registrationData.teamName.trim(),
           notes: registrationData.notes || ''
         });
         
         // Add each member roll number as a separate parameter
-        registrationData.memberRollNumbers.forEach(rollNo => {
-          if (rollNo.trim()) {
-            params.append('memberRollNumbers', rollNo.trim());
-          }
+        validRollNumbers.forEach(rollNo => {
+          params.append('memberRollNumbers', rollNo.trim());
         });
         
         response = await http.post(`/team-registrations/register?${params.toString()}`);
       } else {
+        // Validate individual registration
+        if (!registrationData.rollNumber || !registrationData.rollNumber.trim()) {
+          alert('Please enter your roll number');
+          setIsSubmitting(false);
+          return;
+        }
+
         // Individual registration
         const params = new URLSearchParams({
           eventId: selectedEvent.id,
           userId: user.id,
-          rollNumber: registrationData.rollNumber,
-          notes: registrationData.notes
+          rollNumber: registrationData.rollNumber.trim(),
+          notes: registrationData.notes || ''
         });
         
         response = await http.post(`/event-registrations/register?${params.toString()}`);
@@ -354,6 +392,9 @@ const ActiveEvents = () => {
                 <p><strong>Date:</strong> {selectedEvent && formatDate(selectedEvent.startDate)}</p>
                 <p><strong>Location:</strong> {selectedEvent?.location}</p>
                 <p><strong>Fee:</strong> {selectedEvent?.registrationFee === 0 ? 'Free' : `₹${selectedEvent?.registrationFee}`}</p>
+                {selectedEvent?.isTeamEvent && (
+                  <p><strong>Team Size:</strong> {selectedEvent.minTeamMembers} - {selectedEvent.maxTeamMembers} members</p>
+                )}
               </div>
 
               <form onSubmit={handleRegistrationSubmit}>
