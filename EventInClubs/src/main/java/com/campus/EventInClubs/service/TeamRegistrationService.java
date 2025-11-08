@@ -90,12 +90,22 @@ public class TeamRegistrationService {
         log.info("Team '{}' registered for event '{}' with {} members", 
                 teamName, event.getTitle(), teamSize);
         
-        // Send notification to event organizer
+        // Send notification to user (team leader)
         notificationService.createNotification(
-            event.getOrganizer().getId(),
+            userId,
+            "Team Registration Confirmed",
+            String.format("Your team '%s' has been successfully registered for '%s'", teamName, event.getTitle()),
+            com.campus.EventInClubs.domain.model.Notification.NotificationType.SYSTEM,
+            event.getId(),
+            "EVENT"
+        );
+        
+        // Send notification to club admin
+        notificationService.createNotification(
+            event.getClub().getAdminUser().getId(),
             "New Team Registration",
-            String.format("Team '%s' has registered for event '%s'", teamName, event.getTitle()),
-            com.campus.EventInClubs.domain.model.Notification.NotificationType.EVENT_ANNOUNCEMENT,
+            String.format("Team '%s' registered for '%s' with %d members", teamName, event.getTitle(), teamSize),
+            com.campus.EventInClubs.domain.model.Notification.NotificationType.SYSTEM,
             event.getId(),
             "EVENT"
         );
