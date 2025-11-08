@@ -8,6 +8,7 @@ import com.campus.EventInClubs.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class NotificationService {
     
     private final NotificationRepository notificationRepository;
@@ -41,31 +41,38 @@ public class NotificationService {
         return notificationRepository.countUnreadByUserId(userId);
     }
     
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public NotificationDto createNotification(Long userId, String title, String message, 
                                             Notification.NotificationType type, 
                                             Long relatedEntityId, String relatedEntityType) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        Notification notification = Notification.builder()
-                .title(title)
-                .message(message)
-                .type(type)
-                .user(user)
-                .relatedEntityId(relatedEntityId)
-                .relatedEntityType(relatedEntityType)
-                .isRead(false)
-                .isActive(true)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-        
-        Notification saved = notificationRepository.save(notification);
-        log.info("Created notification for user {}: {}", userId, title);
-        
-        return convertToDto(saved);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            Notification notification = Notification.builder()
+                    .title(title)
+                    .message(message)
+                    .type(type)
+                    .user(user)
+                    .relatedEntityId(relatedEntityId)
+                    .relatedEntityType(relatedEntityType)
+                    .isRead(false)
+                    .isActive(true)
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+            
+            Notification saved = notificationRepository.save(notification);
+            log.info("Created notification for user {}: {}", userId, title);
+            
+            return convertToDto(saved);
+        } catch (Exception e) {
+            log.error("Failed to create notification for user {}: {}", userId, title, e);
+            throw e;
+        }
     }
     
+    @Transactional
     public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
@@ -82,6 +89,7 @@ public class NotificationService {
         log.info("Marked notification {} as read for user {}", notificationId, userId);
     }
     
+    @Transactional
     public void markAllAsRead(Long userId) {
         List<Notification> unreadNotifications = notificationRepository.findByUserIdAndIsReadFalseAndIsActiveTrueOrderByCreatedAtDesc(userId);
         
@@ -95,6 +103,7 @@ public class NotificationService {
         log.info("Marked {} notifications as read for user {}", unreadNotifications.size(), userId);
     }
     
+    @Transactional
     public void deleteNotification(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
