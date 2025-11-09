@@ -588,7 +588,6 @@ export default function ClubAdminDashboard() {
               }
             }))
           );
-          setRegistrations(transformedData);
           // Initialize attendance map from localStorage for team events
           const storageKey = `attendance:event:${eventId}`;
           const saved = localStorage.getItem(storageKey);
@@ -605,6 +604,14 @@ export default function ClubAdminDashboard() {
               return acc;
             }, {});
           }
+          
+          // Update registration statuses based on attendance map
+          const updatedData = transformedData.map(reg => ({
+            ...reg,
+            status: initialMap[reg.id] ? 'ATTENDED' : (initialMap[reg.id] === false ? 'NO_SHOW' : reg.status)
+          }));
+          
+          setRegistrations(updatedData);
           setAttendanceMap(initialMap);
           setRegistrationsEventTitle(ev.title);
           setShowRegistrationsModal(true);
