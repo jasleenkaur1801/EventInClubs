@@ -26,6 +26,7 @@ public class TeamRegistrationService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final EmailService emailService;
     
     public TeamRegistrationDto registerTeam(Long eventId, Long userId, String teamName, 
                                            List<String> memberRollNumbers, List<String> memberNames, 
@@ -133,6 +134,33 @@ public class TeamRegistrationService {
             event.getId(),
             "EVENT"
         );
+        
+        // Send confirmation emails
+        try {
+            String clubAdminEmail = event.getClub().getAdminUser().getEmail();
+            
+            // Send email to team leader with full team details
+            log.info("Attempting to send team leader confirmation email to {}", user.getEmail());
+            emailService.sendTeamLeaderConfirmation(saved, user, clubAdminEmail);
+            
+            // Send emails to all team members
+            if (memberEmails != null && !memberEmails.isEmpty()) {
+                log.info("Sending confirmation emails to {} team members", memberEmails.size());
+                for (int i = 0; i < memberEmails.size(); i++) {
+                    String memberEmail = memberEmails.get(i);
+                    String memberName = (memberNames != null && i < memberNames.size()) ? memberNames.get(i) : "Team Member";
+                    
+                    if (memberEmail != null && !memberEmail.trim().isEmpty()) {
+                        emailService.sendTeamMemberConfirmation(saved, memberName, memberEmail.trim(), clubAdminEmail);
+                    }
+                }
+            }
+            
+            log.info("✅ Team registration confirmation emails sent successfully for team '{}'", teamName);
+        } catch (Exception e) {
+            log.error("❌ Failed to send team registration confirmation emails: {}", e.getMessage(), e);
+            // Don't fail the registration if email fails
+        }
         
         return convertToDto(saved);
     }
