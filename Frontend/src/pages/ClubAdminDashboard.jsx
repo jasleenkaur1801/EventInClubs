@@ -658,27 +658,14 @@ export default function ClubAdminDashboard() {
       
       let rows;
       if (isTeamEvent) {
-        // Group by team and create one row per team
-        const teamMap = new Map();
-        registrations.forEach(reg => {
-          if (reg.fullTeam && !teamMap.has(reg.teamId)) {
-            teamMap.set(reg.teamId, {
-              teamName: reg.fullTeam.teamName,
-              memberNames: reg.fullTeam.memberNames,
-              memberEmails: reg.fullTeam.memberEmails,
-              memberRollNumbers: reg.fullTeam.memberRollNumbers,
-              status: reg.status,
-              registeredAt: reg.registeredAt
-            });
-          }
-        });
-        rows = Array.from(teamMap.values()).map(team => [
-          team.teamName || '',
-          team.memberNames || '',
-          team.memberEmails || '',
-          team.memberRollNumbers || '',
-          team.status || 'REGISTERED',
-          team.registeredAt ? new Date(team.registeredAt).toLocaleString() : ''
+        // Create one row per team member (like the Excel image)
+        rows = registrations.map(reg => [
+          reg.teamName || '',
+          reg.userName || '',
+          reg.userEmail || '',
+          reg.rollNumber || '',
+          reg.status || 'REGISTERED',
+          reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
         ]);
       } else {
         rows = registrations.map(reg => {
