@@ -28,6 +28,13 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
     
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        log.info("✅ EmailService initialized successfully");
+        log.info("📧 Configured email: {}", fromEmail);
+        log.info("📬 JavaMailSender bean: {}", mailSender != null ? "Available" : "NULL");
+    }
+    
     /**
      * Send registration confirmation email to student
      */
