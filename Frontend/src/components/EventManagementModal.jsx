@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { eventApi } from '../api/event';
-import { hallApi } from '../api/hall';
 import './EventManagementModal.css';
 
 export default function EventManagementModal({ 
@@ -19,6 +18,7 @@ export default function EventManagementModal({
     ideaSubmissionDeadline: '',
     acceptsIdeas: false,
     location: '',
+    hallName: '',
     maxParticipants: '',
     registrationFee: '0',
     type: 'WORKSHOP',
@@ -36,7 +36,6 @@ export default function EventManagementModal({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [halls, setHalls] = useState([]);
 
   const eventTypes = [
     'WORKSHOP', 'SEMINAR', 'COMPETITION', 'HACKATHON', 
@@ -50,18 +49,6 @@ export default function EventManagementModal({
   ];
 
 
-  // Fetch halls on component mount
-  useEffect(() => {
-    const fetchHalls = async () => {
-      try {
-        const hallsData = await hallApi.getAllHalls();
-        setHalls(hallsData || []);
-      } catch (error) {
-        console.error('Error fetching halls:', error);
-      }
-    };
-    fetchHalls();
-  }, []);
 
   useEffect(() => {
     if (event) {
@@ -74,6 +61,7 @@ export default function EventManagementModal({
         ideaSubmissionDeadline: event.ideaSubmissionDeadline ? new Date(event.ideaSubmissionDeadline).toISOString().slice(0, 16) : '',
         acceptsIdeas: event.acceptsIdeas !== undefined ? event.acceptsIdeas : false,
         location: event.location || '',
+        hallName: event.hallName || '',
         maxParticipants: event.maxParticipants?.toString() || '',
         registrationFee: event.registrationFee?.toString() || '0',
         type: event.type || 'WORKSHOP',
@@ -98,6 +86,7 @@ export default function EventManagementModal({
         ideaSubmissionDeadline: '',
         acceptsIdeas: false,
         location: '',
+        hallName: '',
         maxParticipants: '',
         registrationFee: '0',
         type: 'WORKSHOP',
@@ -118,26 +107,6 @@ export default function EventManagementModal({
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
-    
-    // If hall is selected, auto-fill location
-    if (name === 'hallId' && value) {
-      const selectedHall = halls.find(hall => hall.id.toString() === value);
-      if (selectedHall) {
-        setFormData(prev => ({
-          ...prev,
-          [name]: newValue,
-          location: selectedHall.location || `${selectedHall.name}`
-        }));
-        // Clear location error if it was set
-        if (errors.location) {
-          setErrors(prev => ({
-            ...prev,
-            location: ''
-          }));
-        }
-        return;
-      }
-    }
     
     setFormData(prev => ({
       ...prev,
@@ -208,8 +177,11 @@ export default function EventManagementModal({
       if (!formData.maxParticipants || formData.maxParticipants <= 0) {
         newErrors.maxParticipants = 'Max participants is required';
       }
-      if (!formData.hallId) {
-        newErrors.hallId = 'Hall selection is required';
+      if (!formData.hallName || !formData.hallName.trim()) {
+        newErrors.hallName = 'Hall name is required';
+      }
+      if (!formData.location || !formData.location.trim()) {
+        newErrors.location = 'Location is required';
       }
       
       // Validate team event fields
@@ -275,7 +247,8 @@ export default function EventManagementModal({
         startDate: formData.acceptsIdeas ? null : formData.startDate,
         endDate: formData.acceptsIdeas ? null : formData.endDate,
         registrationDeadline: null,
-        location: formData.acceptsIdeas ? null : formData.location,
+        location: formData.acceptsIdeas ? null : (formData.location ? formData.location.trim() : null),
+        hallName: formData.acceptsIdeas ? null : (formData.hallName ? formData.hallName.trim() : null),
         maxParticipants: formData.acceptsIdeas ? null : (formData.maxParticipants ? parseInt(formData.maxParticipants) : null),
         registrationFee: 0.0,
         ideaSubmissionDeadline: formData.acceptsIdeas ? (formData.ideaSubmissionDeadline || null) : null,
@@ -284,7 +257,7 @@ export default function EventManagementModal({
         status: event ? (event.status || 'PUBLISHED') : (formData.acceptsIdeas ? 'PUBLISHED' : 'APPROVED'),
         tags: null,
         imageUrl: imageUrl,
-        hallId: formData.acceptsIdeas ? null : (formData.hallId ? parseInt(formData.hallId) : null),
+        hallId: null,
         // Explicitly set isActive to true to ensure event remains visible
         isActive: true,
         // Team event fields (only for direct events)
@@ -605,36 +578,33 @@ export default function EventManagementModal({
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="hallId">Hall *</label>
-                    <select
-                      id="hallId"
-                      name="hallId"
-                      value={formData.hallId}
+                    <label htmlFor="hallName">Hall Name *</label>
+                    <input
+                      type="text"
+                      id="hallName"
+                      name="hallName"
+                      value={formData.hallName}
                       onChange={handleInputChange}
-                      className={errors.hallId ? 'error' : ''}
-                    >
-                      <option value="">Select a hall</option>
-                      {halls.map(hall => (
-                        <option key={hall.id} value={hall.id}>
-                          {hall.name} (Capacity: {hall.seatingCapacity || hall.capacity}) - {hall.location}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.hallId && <span className="error-text">{errors.hallId}</span>}
+                      placeholder="Enter hall name (e.g., Conference Hall A)"
+                      className={errors.hallName ? 'error' : ''}
+                    />
+                    {errors.hallName && <span className="error-text">{errors.hallName}</span>}
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="location">Location</label>
+                  <label htmlFor="location">Location *</label>
                   <input
                     type="text"
                     id="location"
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    placeholder="Enter event location (optional)"
+                    placeholder="Enter location (e.g., First Floor, Academic Block)"
+                    className={errors.location ? 'error' : ''}
                   />
-                  <small className="help-text">Additional location details if needed</small>
+                  {errors.location && <span className="error-text">{errors.location}</span>}
+                  <small className="help-text">Specify the exact location of the hall</small>
                 </div>
 
                 <div className="form-group">

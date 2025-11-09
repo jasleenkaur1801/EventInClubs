@@ -4,13 +4,10 @@ import http from '../api/http';
 
 const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
   const [formData, setFormData] = useState({
-    status: 'APPROVED',
-    pptFile: null,
-    pptFileUrl: ''
+    status: 'APPROVED'
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingPpt, setIsUploadingPpt] = useState(false);
 
   const statusOptions = [
     { value: 'SUBMITTED', label: 'Submitted', description: 'Idea is submitted and awaiting review' },
@@ -37,66 +34,6 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
     }
   };
 
-  const handlePptFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
-      const fileExtension = file.name.toLowerCase().split('.').pop();
-      
-      if (!['ppt', 'pptx'].includes(fileExtension)) {
-        setErrors(prev => ({
-          ...prev,
-          pptFile: 'Please select a valid PPT or PPTX file'
-        }));
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setErrors(prev => ({
-          ...prev,
-          pptFile: 'File size must be less than 10MB'
-        }));
-        return;
-      }
-
-      setIsUploadingPpt(true);
-      setErrors(prev => ({ ...prev, pptFile: '' }));
-
-      try {
-        // Upload PPT file
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        
-        const uploadResponse = await http.post('/upload/ppt', uploadFormData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        if (uploadResponse.status === 200) {
-          const uploadResult = uploadResponse.data;
-          setFormData(prev => ({
-            ...prev,
-            pptFile: file,
-            pptFileUrl: uploadResult.url
-          }));
-        } else {
-          const errorResult = await uploadResponse.json();
-          throw new Error(errorResult.error || 'Failed to upload PPT file');
-        }
-      } catch (error) {
-        console.error('Error uploading PPT:', error);
-        setErrors(prev => ({
-          ...prev,
-          pptFile: error.message || 'Failed to upload PPT file'
-        }));
-      } finally {
-        setIsUploadingPpt(false);
-      }
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,11 +45,10 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
         throw new Error('User not authenticated');
       }
 
-      // Call the approve with PPT API
+      // Call the approve API
       const params = new URLSearchParams({
         status: formData.status,
-        userId: userId,
-        pptFileUrl: formData.pptFileUrl || ''
+        userId: userId
       });
       
       const response = await http.put(`/ideas/${idea.id}/approve-with-ppt?${params.toString()}`);
@@ -180,37 +116,6 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
               {errors.status && <span className="error-text">{errors.status}</span>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="pptFile">PPT Presentation (Optional)</label>
-              <input
-                type="file"
-                id="pptFile"
-                name="pptFile"
-                onChange={handlePptFileChange}
-                accept=".ppt,.pptx"
-                className={errors.pptFile ? 'error' : ''}
-                disabled={isUploadingPpt}
-              />
-              {errors.pptFile && <span className="error-text">{errors.pptFile}</span>}
-              <small className="help-text">
-                Upload a PPT/PPTX file (Max 10MB) to provide detailed presentation of the approved idea
-              </small>
-              
-              {isUploadingPpt && (
-                <div className="upload-status">
-                  <span className="upload-spinner">⏳</span> Uploading PPT file...
-                </div>
-              )}
-              
-              {formData.pptFile && (
-                <div className="file-info">
-                  <span className="file-icon">📄</span>
-                  <span className="file-name">{formData.pptFile.name}</span>
-                  <span className="file-size">({(formData.pptFile.size / 1024 / 1024).toFixed(2)} MB)</span>
-                </div>
-              )}
-            </div>
-
             {errors.submit && <div className="error-text">{errors.submit}</div>}
 
             <div className="form-actions">
@@ -225,7 +130,7 @@ const IdeaApprovalModal = ({ idea, onClose, onApprove }) => {
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={isSubmitting || isUploadingPpt}
+                disabled={isSubmitting}
               >
                 {isSubmitting ? 'Updating...' : 'Update Status'}
               </button>

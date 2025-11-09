@@ -11,9 +11,16 @@ const http = axios.create({
   withCredentials: true
 });
 
-// Add request interceptor for logging
+// Add request interceptor for logging and adding auth token
 http.interceptors.request.use(config => {
   console.log(`Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+  
+  // Add JWT token to Authorization header if it exists
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
   return config;
 }, error => {
   console.error('Request Error:', error);
