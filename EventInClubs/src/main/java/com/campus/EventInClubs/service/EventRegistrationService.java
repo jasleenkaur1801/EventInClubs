@@ -51,6 +51,11 @@ public class EventRegistrationService {
             }
         }
         
+        // Check if email is already registered for this event (prevent duplicate email registrations)
+        if (registrationRepository.existsByEventIdAndUserEmail(eventId, user.getEmail())) {
+            throw new RuntimeException("This email address is already registered for this event");
+        }
+        
         // Check capacity (count REGISTERED + ATTENDED + NO_SHOW towards capacity)
         Long currentRegistrations = registrationRepository.countActiveByEventId(eventId);
         if (event.getMaxParticipants() != null && currentRegistrations >= event.getMaxParticipants()) {
