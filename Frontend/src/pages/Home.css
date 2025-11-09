@@ -701,14 +701,56 @@
   }
 }
 
+@media (max-width: 640px) {
+  .hero-left h1 {
+    font-size: 2.2rem;
+  }
+  
+  .hero-left p {
+    font-size: 1.1rem;
+  }
+  
+  .hero-inner {
+    padding: 40px 18px;
+  }
+  
+  .clubs-section,
+  .features-section,
+  .cta-section {
+    padding: 50px 18px;
+  }
+  
+  .section-header h2 {
+    font-size: 1.9rem;
+  }
+  
+  .feature-card {
+    padding: 28px 20px;
+  }
+}
+
 @media (max-width: 480px) {
   .hero-left h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
+  }
+  
+  .hero-left p {
+    font-size: 1rem;
   }
   
   .hero-cta {
     flex-direction: column;
     align-items: center;
+    gap: 12px;
+  }
+  
+  .btn-primary.large,
+  .btn-outline {
+    padding: 14px 28px;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
   }
   
   .hero-stats {
@@ -717,15 +759,121 @@
   }
   
   .category-tabs {
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 8px;
+    gap: 10px;
+  }
+  
+  .category-tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    font-size: 14px;
   }
   
   .cta-buttons {
     flex-direction: column;
     align-items: center;
+    gap: 12px;
+  }
+  
+  .cta-buttons button {
+    width: 100%;
+    max-width: 280px;
   }
   
   .hero-inner {
+    padding: 30px 16px;
+  }
+  
+  .hero-box {
+    padding: 24px 20px;
+  }
+  
+  .search-input {
+    font-size: 1rem;
+    padding: 16px 20px;
+  }
+  
+  .search-btn {
+    font-size: 1.1rem;
+  }
+  
+  .clubs-section,
+  .features-section,
+  .cta-section {
     padding: 40px 16px;
+  }
+  
+  .section-header h2 {
+    font-size: 1.75rem;
+  }
+  
+  .section-header p {
+    font-size: 1rem;
+  }
+  
+  .feature-card {
+    padding: 24px 18px;
+  }
+  
+  .feature-icon {
+    font-size: 2.5rem;
+  }
+  
+  .feature-card h3 {
+    font-size: 1.3rem;
+  }
+  
+  .cta-content h2 {
+    font-size: 1.75rem;
+  }
+  
+  .cta-content p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-left h1 {
+    font-size: 1.6rem;
+  }
+  
+  .hero-left p {
+    font-size: 0.95rem;
+  }
+  
+  .btn-primary.large,
+  .btn-outline {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .section-header p {
+    font-size: 0.95rem;
+  }
+  
+  .feature-card h3 {
+    font-size: 1.2rem;
+  }
+  
+  .feature-card p {
+    font-size: 0.95rem;
+  }
+  
+  .cta-content h2 {
+    font-size: 1.5rem;
   }
 }

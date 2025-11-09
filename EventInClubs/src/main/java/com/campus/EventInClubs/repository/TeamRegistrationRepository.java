@@ -18,6 +18,9 @@ public interface TeamRegistrationRepository extends JpaRepository<TeamRegistrati
     @Query("SELECT tr FROM TeamRegistration tr WHERE tr.event.id = :eventId AND tr.memberRollNumbers LIKE %:rollNumber%")
     List<TeamRegistration> findByEventIdAndRollNumberContaining(@Param("eventId") Long eventId, @Param("rollNumber") String rollNumber);
     
+    @Query("SELECT tr FROM TeamRegistration tr WHERE tr.event.id = :eventId AND tr.memberEmails LIKE %:email% AND tr.status != 'CANCELLED'")
+    List<TeamRegistration> findByEventIdAndEmailContaining(@Param("eventId") Long eventId, @Param("email") String email);
+    
     @Query("SELECT COUNT(tr) FROM TeamRegistration tr WHERE tr.event.id = :eventId")
     Long countTeamsByEventId(@Param("eventId") Long eventId);
     

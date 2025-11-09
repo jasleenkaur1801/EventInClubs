@@ -585,3 +585,124 @@
     width: 100%;
   }
 }
+
+@media (max-width: 640px) {
+  .active-events-container {
+    padding: 12px;
+  }
+  
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .page-header p {
+    font-size: 1rem;
+    padding: 0 15px;
+  }
+  
+  .event-content {
+    padding: 20px;
+  }
+  
+  .event-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .detail-content {
+    font-size: 0.9rem;
+  }
+  
+  .register-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .active-events-container {
+    padding: 10px;
+  }
+  
+  .page-header {
+    margin-bottom: 30px;
+  }
+  
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .page-header p {
+    font-size: 0.95rem;
+  }
+  
+  .events-grid {
+    gap: 16px;
+  }
+  
+  .event-content {
+    padding: 18px;
+  }
+  
+  .event-header h3 {
+    font-size: 1.2rem;
+  }
+  
+  .event-description {
+    padding: 12px;
+  }
+  
+  .event-description h4 {
+    font-size: 1rem;
+  }
+  
+  .detail-item {
+    gap: 10px;
+  }
+  
+  .detail-icon {
+    font-size: 1.1rem;
+  }
+  
+  .filter-buttons button {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+  }
+  
+  .modal-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .event-summary h4 {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .page-header p {
+    font-size: 0.9rem;
+  }
+  
+  .event-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .event-content {
+    padding: 15px;
+  }
+  
+  .event-type,
+  .event-fee,
+  .event-team-badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+  }
+  
+  .register-btn {
+    padding: 11px 20px;
+    font-size: 0.95rem;
+  }
+}

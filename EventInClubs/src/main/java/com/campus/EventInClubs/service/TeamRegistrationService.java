@@ -62,6 +62,25 @@ public class TeamRegistrationService {
             }
         }
         
+        // Validate that no email is already registered in another team for this event
+        if (memberEmails != null && !memberEmails.isEmpty()) {
+            for (String email : memberEmails) {
+                if (email != null && !email.trim().isEmpty()) {
+                    String normalizedEmail = email.trim().toLowerCase();
+                    log.debug("Checking if email {} is already registered for event {}", normalizedEmail, eventId);
+                    List<TeamRegistration> existingEmailRegistrations = 
+                        teamRegistrationRepository.findByEventIdAndEmailContaining(eventId, normalizedEmail);
+                    
+                    if (!existingEmailRegistrations.isEmpty()) {
+                        TeamRegistration existingTeam = existingEmailRegistrations.get(0);
+                        log.warn("Duplicate email registration attempt: {} already in team '{}' for event {}", 
+                                normalizedEmail, existingTeam.getTeamName(), eventId);
+                        throw new RuntimeException("Email " + email + " is already registered in another team for this event");
+                    }
+                }
+            }
+        }
+        
         // Get user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -69,7 +88,12 @@ public class TeamRegistrationService {
         // Create team registration
         String rollNumbersStr = String.join(",", memberRollNumbers);
         String namesStr = (memberNames != null && !memberNames.isEmpty()) ? String.join(",", memberNames) : null;
-        String emailsStr = (memberEmails != null && !memberEmails.isEmpty()) ? String.join(",", memberEmails) : null;
+        // Store emails in lowercase for consistent validation
+        String emailsStr = (memberEmails != null && !memberEmails.isEmpty()) 
+            ? String.join(",", memberEmails.stream()
+                .map(email -> email != null ? email.trim().toLowerCase() : "")
+                .collect(Collectors.toList())) 
+            : null;
         
         TeamRegistration teamRegistration = TeamRegistration.builder()
                 .event(event)
