@@ -1,41 +1,25 @@
 package com.campus.EventInClubs.controller;
 
+import com.campus.EventInClubs.service.CloudinaryService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/files")
 @Slf4j
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class FileUploadController {
     
-    private static final String UPLOAD_DIR = "uploads/club-logos/";
+    private final CloudinaryService cloudinaryService;
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final String[] ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"};
-    
-    public FileUploadController() {
-        // Create upload directory if it doesn't exist
-        try {
-            Path uploadPath = Paths.get(UPLOAD_DIR);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-                log.info("Created upload directory: {}", UPLOAD_DIR);
-            }
-        } catch (IOException e) {
-            log.error("Could not create upload directory", e);
-        }
-    }
     
     @PostMapping("/upload-club-logo")
     public ResponseEntity<?> uploadClubLogo(@RequestParam("file") MultipartFile file) {
@@ -73,42 +57,37 @@ public class FileUploadController {
                         .body(Map.of("error", "Only image files (jpg, jpeg, png, gif, webp) are allowed"));
             }
             
-            // Generate unique filename
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-            Path filePath = Paths.get(UPLOAD_DIR + uniqueFilename);
+            // Upload to Cloudinary
+            String imageUrl = cloudinaryService.uploadClubLogo(file);
+            log.info("Uploaded club logo to Cloudinary: {}", imageUrl);
             
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-            log.info("Uploaded club logo: {}", uniqueFilename);
-            
-            // Return the file URL (relative path)
-            String fileUrl = "/" + UPLOAD_DIR + uniqueFilename;
-            
+            // Return the Cloudinary URL
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "fileUrl", fileUrl,
-                    "filename", uniqueFilename
+                    "fileUrl", imageUrl,
+                    "filename", originalFilename
             ));
             
         } catch (IOException e) {
             log.error("Error uploading file", e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Failed to upload file"));
+                    .body(Map.of("error", "Failed to upload file: " + e.getMessage()));
         }
     }
     
     @DeleteMapping("/delete-club-logo")
-    public ResponseEntity<?> deleteClubLogo(@RequestParam String filename) {
+    public ResponseEntity<?> deleteClubLogo(@RequestParam String imageUrl) {
         try {
-            Path filePath = Paths.get(UPLOAD_DIR + filename);
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                log.info("Deleted club logo: {}", filename);
+            String publicId = cloudinaryService.extractPublicId(imageUrl);
+            if (publicId != null) {
+                cloudinaryService.deleteClubLogo(publicId);
+                log.info("Deleted club logo from Cloudinary: {}", publicId);
                 return ResponseEntity.ok(Map.of("success", true));
             } else {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Invalid image URL"));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Error deleting file", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Failed to delete file"));

@@ -5,7 +5,11 @@ import { clubApi } from '../api/club';
 export default function ClubLogoUpdateModal({ isOpen, onClose, club, onSuccess }) {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
   const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(club?.logoUrl ? `${API_BASE_URL}${club.logoUrl}` : null);
+  const [logoPreview, setLogoPreview] = useState(
+    club?.logoUrl 
+      ? (club.logoUrl.startsWith('http') ? club.logoUrl : `${API_BASE_URL}${club.logoUrl}`)
+      : null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -74,7 +78,11 @@ export default function ClubLogoUpdateModal({ isOpen, onClose, club, onSuccess }
 
   const handleClose = () => {
     setLogoFile(null);
-    setLogoPreview(club?.logoUrl ? `${API_BASE_URL}${club.logoUrl}` : null);
+    setLogoPreview(
+      club?.logoUrl 
+        ? (club.logoUrl.startsWith('http') ? club.logoUrl : `${API_BASE_URL}${club.logoUrl}`)
+        : null
+    );
     setError('');
     onClose();
   };

@@ -30,7 +30,11 @@ export default function ClubCard({ name, desc, shortName, events, category, rati
       <div className="club-header">
         <div className="club-avatar">
           {logoUrl ? (
-            <img src={`${API_BASE_URL}${logoUrl}`} alt={`${name} logo`} className="club-logo-img" />
+            <img 
+              src={logoUrl.startsWith('http') ? logoUrl : `${API_BASE_URL}${logoUrl}`} 
+              alt={`${name} logo`} 
+              className="club-logo-img" 
+            />
           ) : (
             <span className="club-initials">
               {shortName || name.split(" ").slice(0,2).map(w=>w[0]).join("")}
