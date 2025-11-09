@@ -162,23 +162,23 @@
 
 .input-icon {
   position: absolute;
-  left: 16px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #4b5563;
   z-index: 3;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 16px 48px 16px 52px;
+  padding: 16px 48px 16px 56px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 1rem;
@@ -636,7 +636,7 @@
   }
   
   .input-wrapper input {
-    padding: 14px 44px 14px 48px;
+    padding: 14px 44px 14px 52px;
     font-size: 16px; /* Prevent zoom on iOS */
   }
   
@@ -694,7 +694,7 @@
   }
   
   .input-wrapper input {
-    padding: 13px 42px 13px 46px;
+    padding: 13px 42px 13px 50px;
     font-size: 16px;
   }
   
@@ -750,7 +750,7 @@
   }
   
   .input-wrapper input {
-    padding: 12px 40px 12px 44px;
+    padding: 12px 40px 12px 48px;
     font-size: 16px;
   }
   
@@ -799,7 +799,7 @@
   }
   
   .input-wrapper input {
-    padding: 11px 38px 11px 42px;
+    padding: 11px 38px 11px 46px;
     font-size: 15px;
   }
   
