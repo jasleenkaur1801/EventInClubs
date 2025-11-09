@@ -30,6 +30,10 @@ public class EmailService {
      */
     public void sendRegistrationConfirmation(EventRegistration registration, String clubAdminEmail) {
         try {
+            log.info("Starting email send process for registration ID: {}", registration.getId());
+            log.info("From email configured as: {}", fromEmail);
+            log.info("Recipient: {}, Reply-to: {}", registration.getUser().getEmail(), clubAdminEmail);
+            
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
@@ -42,17 +46,22 @@ public class EmailService {
             helper.setTo(student.getEmail());
             helper.setSubject("Registration Confirmed: " + event.getTitle());
             
+            log.info("Building email body for event: {}", event.getTitle());
             String emailBody = buildRegistrationEmail(registration, event, student);
             helper.setText(emailBody, true); // true = HTML email
             
+            log.info("Attempting to send email via SMTP...");
             mailSender.send(message);
-            log.info("Registration confirmation email sent to {} for event {}", student.getEmail(), event.getTitle());
+            log.info("✅ Registration confirmation email successfully sent to {} for event {}", student.getEmail(), event.getTitle());
             
         } catch (MessagingException e) {
-            log.error("Failed to send registration confirmation email", e);
+            log.error("❌ MessagingException while sending email: {}", e.getMessage(), e);
+            log.error("Email details - From: {}, To: {}, Event: {}", 
+                fromEmail, registration.getUser().getEmail(), registration.getEvent().getTitle());
             // Don't throw exception - email failure shouldn't break registration
         } catch (Exception e) {
-            log.error("Unexpected error sending registration confirmation email", e);
+            log.error("❌ Unexpected error sending registration confirmation email: {}", e.getMessage(), e);
+            log.error("Stack trace:", e);
         }
     }
     

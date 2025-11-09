@@ -93,13 +93,20 @@ public class EventRegistrationService {
         
         // Send confirmation email to student
         try {
+            log.info("Attempting to send registration confirmation email to user {}", user.getEmail());
             String clubAdminEmail = event.getClub().getAdminUser().getEmail();
+            log.info("Club admin email: {}", clubAdminEmail);
+            
             EventRegistration savedRegistration = registrationRepository.findById(registration.getId()).orElse(null);
             if (savedRegistration != null) {
+                log.info("Saved registration found, calling email service...");
                 emailService.sendRegistrationConfirmation(savedRegistration, clubAdminEmail);
+                log.info("Email service call completed for registration {}", savedRegistration.getId());
+            } else {
+                log.warn("Saved registration not found for ID {}", registration.getId());
             }
         } catch (Exception e) {
-            log.error("Failed to send registration confirmation email", e);
+            log.error("Failed to send registration confirmation email to {}: {}", user.getEmail(), e.getMessage(), e);
             // Don't fail the registration if email fails
         }
         
