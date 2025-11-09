@@ -589,7 +589,23 @@ export default function ClubAdminDashboard() {
             }))
           );
           setRegistrations(transformedData);
-          setAttendanceMap({});
+          // Initialize attendance map from localStorage for team events
+          const storageKey = `attendance:event:${eventId}`;
+          const saved = localStorage.getItem(storageKey);
+          let initialMap;
+          if (saved) {
+            try {
+              initialMap = JSON.parse(saved);
+            } catch (e) {
+              initialMap = {};
+            }
+          } else {
+            initialMap = transformedData.reduce((acc, reg) => {
+              acc[reg.id] = reg.status === 'ATTENDED';
+              return acc;
+            }, {});
+          }
+          setAttendanceMap(initialMap);
           setRegistrationsEventTitle(ev.title);
           setShowRegistrationsModal(true);
         }
@@ -631,7 +647,9 @@ export default function ClubAdminDashboard() {
     // Update local state immediately for better UX
     setAttendanceMap(prev => {
       const updated = { ...prev, [registrationId]: newPresentStatus };
-      if (registrationsEventId) {
+      // Save to localStorage for team events
+      const ev = activeEvents.find(e => e.id === registrationsEventId);
+      if (ev?.isTeamEvent && registrationsEventId) {
         localStorage.setItem(`attendance:event:${registrationsEventId}`, JSON.stringify(updated));
       }
       return updated;
@@ -642,6 +660,24 @@ export default function ClubAdminDashboard() {
       reg.id === registrationId ? { ...reg, status: newStatus } : reg
     );
     setRegistrations(updatedRegistrations);
+    
+    // Save to backend (only for individual events, team events use localStorage)
+    const ev = activeEvents.find(e => e.id === registrationsEventId);
+    if (!ev?.isTeamEvent) {
+      try {
+        await http.put(`/event-registrations/${registrationId}/status?status=${newStatus}`);
+        console.log(`Successfully updated attendance status for registration ${registrationId} to ${newStatus}`);
+      } catch (error) {
+        console.error('Error updating attendance status:', error);
+        // Revert on error
+        setAttendanceMap(prev => ({ ...prev, [registrationId]: currentStatus }));
+        const revertedRegistrations = registrations.map(reg => 
+          reg.id === registrationId ? { ...reg, status: currentStatus ? 'ATTENDED' : 'REGISTERED' } : reg
+        );
+        setRegistrations(revertedRegistrations);
+        alert('Failed to update attendance. Please try again.');
+      }
+    }
   };
 
   const handleSaveAttendance = async () => {
