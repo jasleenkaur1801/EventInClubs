@@ -22,17 +22,11 @@ public class CloudinaryService {
             log.info("Starting Cloudinary upload for file: {}, size: {} bytes", 
                 file.getOriginalFilename(), file.getSize());
             
-            // Upload to Cloudinary
+            // Upload to Cloudinary without transformation (simpler approach)
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
                     "folder", "club-logos",
-                    "resource_type", "image",
-                    "transformation", ObjectUtils.asMap(
-                        "width", 500,
-                        "height", 500,
-                        "crop", "limit",
-                        "quality", "auto"
-                    )
+                    "resource_type", "image"
                 )
             );
             
