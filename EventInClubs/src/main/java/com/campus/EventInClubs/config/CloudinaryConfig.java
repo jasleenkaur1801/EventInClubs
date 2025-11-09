@@ -22,16 +22,23 @@ public class CloudinaryConfig {
     
     @Bean
     public Cloudinary cloudinary() {
-        log.info("Initializing Cloudinary with cloud_name: {}", cloudName);
-        
-        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
-            "cloud_name", cloudName,
-            "api_key", apiKey,
-            "api_secret", apiSecret,
-            "secure", true
-        ));
-        
-        log.info("Cloudinary initialized successfully");
-        return cloudinary;
+        try {
+            log.info("Initializing Cloudinary with cloud_name: {}", cloudName);
+            log.info("API Key length: {}", apiKey != null ? apiKey.length() : "null");
+            log.info("API Secret length: {}", apiSecret != null ? apiSecret.length() : "null");
+            
+            Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret,
+                "secure", true
+            ));
+            
+            log.info("Cloudinary initialized successfully");
+            return cloudinary;
+        } catch (Exception e) {
+            log.error("Failed to initialize Cloudinary: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to initialize Cloudinary", e);
+        }
     }
 }

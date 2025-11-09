@@ -1,8 +1,8 @@
 package com.campus.EventInClubs.controller;
 
 import com.campus.EventInClubs.service.CloudinaryService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,10 +14,11 @@ import java.util.Map;
 @RequestMapping("/api/files")
 @Slf4j
 @CrossOrigin(origins = "*")
-@RequiredArgsConstructor
 public class FileUploadController {
     
-    private final CloudinaryService cloudinaryService;
+    @Autowired(required = false)
+    private CloudinaryService cloudinaryService;
+    
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final String[] ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"};
     
@@ -61,6 +62,13 @@ public class FileUploadController {
                 log.warn("Invalid file extension: {}", fileExtension);
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Only image files (jpg, jpeg, png, gif, webp) are allowed"));
+            }
+            
+            // Check if Cloudinary is available
+            if (cloudinaryService == null) {
+                log.error("CloudinaryService is not available - bean not initialized");
+                return ResponseEntity.internalServerError()
+                        .body(Map.of("error", "Image upload service is not configured. Please contact administrator."));
             }
             
             // Upload to Cloudinary
