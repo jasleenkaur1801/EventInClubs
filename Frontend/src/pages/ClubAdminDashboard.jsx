@@ -566,16 +566,28 @@ export default function ClubAdminDashboard() {
         const response = await http.get(`/team-registrations/event/${eventId}`);
         if (response.status === 200) {
           const teamData = response.data;
-          // Keep team registrations as one row per team for download
-          const transformedData = teamData.map(team => ({
-            id: team.id,
-            teamName: team.teamName,
-            memberNames: team.memberNames ? team.memberNames.join(', ') : '',
-            memberEmails: team.memberEmails ? team.memberEmails.join(', ') : '',
-            memberRollNumbers: team.memberRollNumbers ? team.memberRollNumbers.join(', ') : '',
-            status: team.status || 'REGISTERED',
-            registeredAt: team.registeredAt
-          }));
+          // Transform team registrations - expand to individual members for attendance marking
+          const transformedData = teamData.flatMap(team => 
+            team.memberRollNumbers.map((rollNo, index) => ({
+              id: `${team.id}-${index}`,
+              teamId: team.id,
+              userName: team.memberNames && team.memberNames[index] ? team.memberNames[index] : 
+                        (index === 0 ? `${team.registeredByName} (Leader)` : `Team Member ${index + 1}`),
+              userEmail: team.memberEmails && team.memberEmails[index] ? team.memberEmails[index] :
+                         (index === 0 ? team.registeredByEmail || 'N/A' : 'N/A'),
+              rollNumber: rollNo,
+              status: team.status === 'REGISTERED' ? 'REGISTERED' : team.status,
+              registeredAt: team.registeredAt,
+              teamName: team.teamName,
+              // Store full team data for CSV export
+              fullTeam: {
+                teamName: team.teamName,
+                memberNames: team.memberNames ? team.memberNames.join(', ') : '',
+                memberEmails: team.memberEmails ? team.memberEmails.join(', ') : '',
+                memberRollNumbers: team.memberRollNumbers ? team.memberRollNumbers.join(', ') : ''
+              }
+            }))
+          );
           setRegistrations(transformedData);
           setAttendanceMap({});
           setRegistrationsEventTitle(ev.title);
@@ -644,26 +656,43 @@ export default function ClubAdminDashboard() {
         ? ['Team Name', 'Name', 'Email', 'Roll', 'Status', 'Registered At']
         : ['Name','Email','Roll','Present','Status','Registered At'];
       
-      const rows = registrations.map(reg => {
-        const present = attendanceMap[reg.id] === true;
-        return isTeamEvent 
-          ? [
-              reg.teamName || '',
-              reg.memberNames || '',
-              reg.memberEmails || '',
-              reg.memberRollNumbers || '',
-              reg.status || 'REGISTERED',
-              reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
-            ]
-          : [
-              reg.userName || '',
-              reg.userEmail || '',
-              reg.rollNumber || '',
-              present ? 'Yes' : 'No',
-              present ? 'ATTENDED' : 'NO_SHOW',
-              reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
-            ];
-      });
+      let rows;
+      if (isTeamEvent) {
+        // Group by team and create one row per team
+        const teamMap = new Map();
+        registrations.forEach(reg => {
+          if (reg.fullTeam && !teamMap.has(reg.teamId)) {
+            teamMap.set(reg.teamId, {
+              teamName: reg.fullTeam.teamName,
+              memberNames: reg.fullTeam.memberNames,
+              memberEmails: reg.fullTeam.memberEmails,
+              memberRollNumbers: reg.fullTeam.memberRollNumbers,
+              status: reg.status,
+              registeredAt: reg.registeredAt
+            });
+          }
+        });
+        rows = Array.from(teamMap.values()).map(team => [
+          team.teamName || '',
+          team.memberNames || '',
+          team.memberEmails || '',
+          team.memberRollNumbers || '',
+          team.status || 'REGISTERED',
+          team.registeredAt ? new Date(team.registeredAt).toLocaleString() : ''
+        ]);
+      } else {
+        rows = registrations.map(reg => {
+          const present = attendanceMap[reg.id] === true;
+          return [
+            reg.userName || '',
+            reg.userEmail || '',
+            reg.rollNumber || '',
+            present ? 'Yes' : 'No',
+            present ? 'ATTENDED' : 'NO_SHOW',
+            reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : ''
+          ];
+        });
+      }
       const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell).replaceAll('"','""')}"`).join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -1726,27 +1755,17 @@ export default function ClubAdminDashboard() {
                   }}>
                     <thead>
                       <tr style={{ backgroundColor: '#f5f5f5' }}>
+                        <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Name</th>
+                        <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Email</th>
+                        <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Roll Number</th>
                         {(() => {
                           const ev = activeEvents.find(e => e.id === registrationsEventId);
-                          const isTeam = ev?.isTeamEvent;
-                          return isTeam ? (
-                            <>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Team Name</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Name</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Email</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Roll</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Status</th>
-                            </>
-                          ) : (
-                            <>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Name</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Email</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Roll Number</th>
-                              <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Status</th>
-                              <th style={{ textAlign: 'center', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Present</th>
-                            </>
+                          return ev?.isTeamEvent && (
+                            <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Team Name</th>
                           );
                         })()}
+                        <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Status</th>
+                        <th style={{ textAlign: 'center', padding: '16px', fontWeight: '600', color: '#333', borderBottom: '2px solid #e0e0e0' }}>Present</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1754,27 +1773,20 @@ export default function ClubAdminDashboard() {
                         .filter(reg => {
                           if (!searchQuery.trim()) return true;
                           const query = searchQuery.toLowerCase();
-                          const ev = activeEvents.find(e => e.id === registrationsEventId);
-                          if (ev?.isTeamEvent) {
-                            return (
-                              (reg.teamName || '').toLowerCase().includes(query) ||
-                              (reg.memberNames || '').toLowerCase().includes(query) ||
-                              (reg.memberEmails || '').toLowerCase().includes(query) ||
-                              (reg.memberRollNumbers || '').toLowerCase().includes(query)
-                            );
-                          }
                           return (
                             (reg.userName || '').toLowerCase().includes(query) ||
                             (reg.userEmail || '').toLowerCase().includes(query) ||
-                            (reg.rollNumber || '').toLowerCase().includes(query)
+                            (reg.rollNumber || '').toLowerCase().includes(query) ||
+                            (reg.teamName || '').toLowerCase().includes(query)
                           );
                         })
                         .sort((a, b) => {
                           const ev = activeEvents.find(e => e.id === registrationsEventId);
                           if (ev?.isTeamEvent) {
-                            const nameA = (a.teamName || '').toLowerCase();
-                            const nameB = (b.teamName || '').toLowerCase();
-                            return nameA.localeCompare(nameB);
+                            // Sort by team name first, then by member name
+                            const teamCompare = (a.teamName || '').toLowerCase().localeCompare((b.teamName || '').toLowerCase());
+                            if (teamCompare !== 0) return teamCompare;
+                            return (a.userName || '').toLowerCase().localeCompare((b.userName || '').toLowerCase());
                           }
                           const nameA = (a.userName || '').toLowerCase();
                           const nameB = (b.userName || '').toLowerCase();
@@ -1789,81 +1801,52 @@ export default function ClubAdminDashboard() {
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#fafafa'}
                         >
+                          <td style={{ padding: '16px', color: '#333' }}>
+                            {reg.userName}
+                          </td>
+                          <td style={{ padding: '16px', color: '#666' }}>
+                            {reg.userEmail}
+                          </td>
+                          <td style={{ padding: '16px', color: '#666' }}>
+                            {reg.rollNumber || '-'}
+                          </td>
                           {(() => {
                             const ev = activeEvents.find(e => e.id === registrationsEventId);
-                            const isTeam = ev?.isTeamEvent;
-                            return isTeam ? (
-                              <>
-                                <td style={{ padding: '16px', color: '#7c3aed', fontWeight: '500' }}>
-                                  {reg.teamName || '-'}
-                                </td>
-                                <td style={{ padding: '16px', color: '#333' }}>
-                                  {reg.memberNames || '-'}
-                                </td>
-                                <td style={{ padding: '16px', color: '#666' }}>
-                                  {reg.memberEmails || '-'}
-                                </td>
-                                <td style={{ padding: '16px', color: '#666' }}>
-                                  {reg.memberRollNumbers || '-'}
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    backgroundColor: reg.status === 'REGISTERED' ? '#fff3e0' :
-                                                   reg.status === 'CANCELLED' ? '#f5f5f5' : '#e3f2fd',
-                                    color: reg.status === 'REGISTERED' ? '#e65100' :
-                                          reg.status === 'CANCELLED' ? '#757575' : '#1976d2'
-                                  }}>
-                                    {reg.status}
-                                  </span>
-                                </td>
-                              </>
-                            ) : (
-                              <>
-                                <td style={{ padding: '16px', color: '#333' }}>
-                                  {reg.userName}
-                                </td>
-                                <td style={{ padding: '16px', color: '#666' }}>
-                                  {reg.userEmail}
-                                </td>
-                                <td style={{ padding: '16px', color: '#666' }}>
-                                  {reg.rollNumber || '-'}
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                  <span style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    backgroundColor: reg.status === 'ATTENDED' ? '#e8f5e9' :
-                                                   reg.status === 'NO_SHOW' ? '#ffebee' :
-                                                   reg.status === 'CANCELLED' ? '#f5f5f5' : '#fff3e0',
-                                    color: reg.status === 'ATTENDED' ? '#2e7d32' :
-                                          reg.status === 'NO_SHOW' ? '#c62828' :
-                                          reg.status === 'CANCELLED' ? '#757575' : '#e65100'
-                                  }}>
-                                    {reg.status}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'center' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={!!attendanceMap[reg.id]}
-                                    onChange={() => handleToggleAttendance(reg.id)}
-                                    style={{
-                                      width: '20px',
-                                      height: '20px',
-                                      cursor: 'pointer',
-                                      accentColor: '#4CAF50'
-                                    }}
-                                  />
-                                </td>
-                              </>
+                            return ev?.isTeamEvent && (
+                              <td style={{ padding: '16px', color: '#7c3aed', fontWeight: '500' }}>
+                                {reg.teamName || '-'}
+                              </td>
                             );
                           })()}
+                          <td style={{ padding: '16px' }}>
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              backgroundColor: reg.status === 'ATTENDED' ? '#e8f5e9' :
+                                             reg.status === 'NO_SHOW' ? '#ffebee' :
+                                             reg.status === 'CANCELLED' ? '#f5f5f5' : '#fff3e0',
+                              color: reg.status === 'ATTENDED' ? '#2e7d32' :
+                                    reg.status === 'NO_SHOW' ? '#c62828' :
+                                    reg.status === 'CANCELLED' ? '#757575' : '#e65100'
+                            }}>
+                              {reg.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={!!attendanceMap[reg.id]}
+                              onChange={() => handleToggleAttendance(reg.id)}
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                cursor: 'pointer',
+                                accentColor: '#4CAF50'
+                              }}
+                            />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
