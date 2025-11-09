@@ -52,7 +52,12 @@ public class EventRegistrationService {
         }
         
         // Check if email is already registered for this event (prevent duplicate email registrations)
-        if (registrationRepository.existsByEventIdAndUserEmail(eventId, user.getEmail())) {
+        String userEmail = user.getEmail();
+        log.info("Checking if email {} is already registered for event {}", userEmail, eventId);
+        boolean emailExists = registrationRepository.existsByEventIdAndUserEmail(eventId, userEmail);
+        log.info("Email exists check result: {}", emailExists);
+        if (emailExists) {
+            log.error("Duplicate registration attempt: email {} already registered for event {}", userEmail, eventId);
             throw new RuntimeException("This email address is already registered for this event");
         }
         

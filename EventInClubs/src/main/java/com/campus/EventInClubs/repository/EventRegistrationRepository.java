@@ -40,10 +40,10 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     List<EventRegistration> findByEventIdAndPaymentStatus(@Param("eventId") Long eventId, @Param("paymentStatus") EventRegistration.PaymentStatus paymentStatus);
     
     // Find registration by event and user email
-    @Query("SELECT er FROM EventRegistration er WHERE er.event.id = :eventId AND er.user.email = :email")
+    @Query("SELECT er FROM EventRegistration er INNER JOIN er.user u WHERE er.event.id = :eventId AND LOWER(u.email) = LOWER(:email)")
     Optional<EventRegistration> findByEventIdAndUserEmail(@Param("eventId") Long eventId, @Param("email") String email);
     
     // Check if an email is already registered for an event (any status except CANCELLED)
-    @Query("SELECT CASE WHEN COUNT(er) > 0 THEN true ELSE false END FROM EventRegistration er WHERE er.event.id = :eventId AND er.user.email = :email AND er.status != 'CANCELLED'")
+    @Query("SELECT CASE WHEN COUNT(er) > 0 THEN true ELSE false END FROM EventRegistration er INNER JOIN er.user u WHERE er.event.id = :eventId AND LOWER(u.email) = LOWER(:email) AND er.status != 'CANCELLED'")
     boolean existsByEventIdAndUserEmail(@Param("eventId") Long eventId, @Param("email") String email);
 }
