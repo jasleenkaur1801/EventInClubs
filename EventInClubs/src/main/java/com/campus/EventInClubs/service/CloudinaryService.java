@@ -19,6 +19,9 @@ public class CloudinaryService {
     
     public String uploadClubLogo(MultipartFile file) throws IOException {
         try {
+            log.info("Starting Cloudinary upload for file: {}, size: {} bytes", 
+                file.getOriginalFilename(), file.getSize());
+            
             // Upload to Cloudinary
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
@@ -38,8 +41,11 @@ public class CloudinaryService {
             return imageUrl;
             
         } catch (IOException e) {
-            log.error("Error uploading image to Cloudinary", e);
-            throw new IOException("Failed to upload image to Cloudinary: " + e.getMessage());
+            log.error("IOException uploading image to Cloudinary: {}", e.getMessage(), e);
+            throw new IOException("Failed to upload image to Cloudinary: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error uploading image to Cloudinary: {}", e.getMessage(), e);
+            throw new IOException("Unexpected error uploading to Cloudinary: " + e.getMessage(), e);
         }
     }
     

@@ -24,14 +24,18 @@ public class FileUploadController {
     @PostMapping("/upload-club-logo")
     public ResponseEntity<?> uploadClubLogo(@RequestParam("file") MultipartFile file) {
         try {
+            log.info("Received file upload request: {}", file.getOriginalFilename());
+            
             // Validate file
             if (file.isEmpty()) {
+                log.warn("Empty file received");
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Please select a file to upload"));
             }
             
             // Check file size
             if (file.getSize() > MAX_FILE_SIZE) {
+                log.warn("File size too large: {} bytes", file.getSize());
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "File size exceeds maximum limit of 5MB"));
             }
@@ -39,6 +43,7 @@ public class FileUploadController {
             // Check file extension
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null) {
+                log.warn("Filename is null");
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Invalid file"));
             }
@@ -53,13 +58,15 @@ public class FileUploadController {
             }
             
             if (!isValidExtension) {
+                log.warn("Invalid file extension: {}", fileExtension);
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Only image files (jpg, jpeg, png, gif, webp) are allowed"));
             }
             
             // Upload to Cloudinary
+            log.info("Uploading to Cloudinary...");
             String imageUrl = cloudinaryService.uploadClubLogo(file);
-            log.info("Uploaded club logo to Cloudinary: {}", imageUrl);
+            log.info("Successfully uploaded club logo to Cloudinary: {}", imageUrl);
             
             // Return the Cloudinary URL
             return ResponseEntity.ok(Map.of(
@@ -69,9 +76,13 @@ public class FileUploadController {
             ));
             
         } catch (IOException e) {
-            log.error("Error uploading file", e);
+            log.error("IOException uploading file: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Failed to upload file: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error uploading file: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Unexpected error: " + e.getMessage()));
         }
     }
     
