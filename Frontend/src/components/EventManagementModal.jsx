@@ -607,16 +607,39 @@ export default function EventManagementModal({
                   <small className="help-text">Specify the exact location of the hall</small>
                 </div>
 
-                <div className="form-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="isTeamEvent"
-                      checked={formData.isTeamEvent}
-                      onChange={handleInputChange}
-                    />
-                    <span>This is a team event</span>
+                {/* Toggle for Team Event / Individual Event */}
+                <div className="form-group toggle-section">
+                  <label className="toggle-label">
+                    <span className="toggle-title">Participation Type</span>
                   </label>
+                  <div className="toggle-options">
+                    <label className={`toggle-option ${!formData.isTeamEvent ? 'active' : ''}`}>
+                      <input
+                        type="radio"
+                        name="isTeamEvent"
+                        checked={!formData.isTeamEvent}
+                        onChange={() => setFormData(prev => ({ ...prev, isTeamEvent: false }))}
+                      />
+                      <span className="toggle-icon">👤</span>
+                      <span className="toggle-text">
+                        <strong>Individual Event</strong>
+                        <small>Students register individually</small>
+                      </span>
+                    </label>
+                    <label className={`toggle-option ${formData.isTeamEvent ? 'active' : ''}`}>
+                      <input
+                        type="radio"
+                        name="isTeamEvent"
+                        checked={formData.isTeamEvent}
+                        onChange={() => setFormData(prev => ({ ...prev, isTeamEvent: true }))}
+                      />
+                      <span className="toggle-icon">👥</span>
+                      <span className="toggle-text">
+                        <strong>Team Event</strong>
+                        <small>Students register as teams</small>
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 {formData.isTeamEvent && (
