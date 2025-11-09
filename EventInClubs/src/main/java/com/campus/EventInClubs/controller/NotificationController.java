@@ -19,23 +19,32 @@ public class NotificationController {
     private final JwtUtil jwtUtil;
 
     @GetMapping
-    public ResponseEntity<List<NotificationDto>> getUserNotifications(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<NotificationDto>> getUserNotifications(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(List.of());
+            }
+            
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
-                return ResponseEntity.status(401).build();
+                return ResponseEntity.status(401).body(List.of());
             }
             
             List<NotificationDto> notifications = notificationService.getUserNotifications(userId);
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(List.of());
         }
     }
 
     @GetMapping("/unread")
-    public ResponseEntity<List<NotificationDto>> getUnreadNotifications(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<NotificationDto>> getUnreadNotifications(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(List.of());
+            }
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
                 return ResponseEntity.status(401).build();
@@ -49,8 +58,12 @@ public class NotificationController {
     }
 
     @GetMapping("/unread/count")
-    public ResponseEntity<Map<String, Object>> getUnreadCount(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, Object>> getUnreadCount(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("unreadCount", 0));
+            }
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
                 return ResponseEntity.status(401).build();
@@ -64,8 +77,12 @@ public class NotificationController {
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<Map<String, String>> markAsRead(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, String>> markAsRead(@PathVariable Long id, 
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Missing or invalid token"));
+            }
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
@@ -79,8 +96,12 @@ public class NotificationController {
     }
 
     @PutMapping("/read-all")
-    public ResponseEntity<Map<String, String>> markAllAsRead(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, String>> markAllAsRead(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Missing or invalid token"));
+            }
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
@@ -94,8 +115,12 @@ public class NotificationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable Long id, 
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Missing or invalid token"));
+            }
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
